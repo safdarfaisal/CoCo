@@ -112,3 +112,9 @@ char getCharacter(TwinBuffer *buffer){
     }
     return character;
 }
+
+void ungetcBuffer(TwinBuffer *buffer, char *c){
+    if(!buffer)    KILL
+    Buffer *currBuffer = buffer->isFirst ? buffer->firstBuffer : buffer-> secondBuffer;
+    currBuffer->forward--;
+}

@@ -5,111 +5,11 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "datastructures/buffer.h"
+#include "helper/definitions.h"
 
-#define IDLENGTH 30
-
-
-typedef enum Terminals {
-    TK_ASSIGNOP,
-    TK_COMMENT,
-    TK_FIELDID,
-    TK_ID,
-    TK_NUM,
-    TK_RNUM,
-    TK_FUNID,
-    TK_RUID,
-    TK_WITH,
-    TK_PARAMETERS,
-    TK_END,
-    TK_WHILE,
-    TK_UNION,
-    TK_ENDUNION,
-    TK_DEFINETYPE,
-    TK_AS,
-    TK_TYPE,
-    TK_MAIN,
-    TK_GLOBAL,
-    TK_PARAMETER,
-    TK_LIST,
-    TK_SQL,
-    TK_SQR,
-    TK_INPUT,
-    TK_OUTPUT,
-    TK_INT,
-    TK_REAL,
-    TK_COMMA,
-    TK_SEM,
-    TK_COLON,
-    TK_DOT,
-    TK_ENDWHILE,
-    TK_OP,
-    TK_CL,
-    TK_IF,
-    TK_THEN,
-    TK_ENDIF,
-    TK_READ,
-    TK_WRITE,
-    TK_RETURN,
-    TK_PLUS,
-    TK_MINUS,
-    TK_MUL,
-    TK_DIV,
-    TK_CALL,
-    TK_RECORD,
-    TK_ENDRECORD,
-    TK_ELSE,
-    TK_AND,
-    TK_OR,
-    TK_NOT,
-    TK_LT,
-    TK_LE,
-    TK_GT,
-    TK_GE,
-    TK_EQ,
-    TK_NE,
-    
-} Terminals;
-
-
-typedef struct KeywordPair{
-    char keyword[IDLENGTH];
-    Terminals enumVal;
-
-} KeywordPair; 
-
-const KeywordPair keywords[25] = {
-    {"", },
-    {"with", TK_WITH},
-    {"while", TK_WHILE},
-    {"parameters", TK_PARAMETERS},
-    {"end", TK_END},
-    {"union", TK_UNION},
-    {"endunion", TK_ENDUNION},
-    {"definetype", TK_DEFINETYPE},
-    {"as", TK_AS},
-    {"type", TK_TYPE},
-    {"global", TK_GLOBAL},
-    {"parameter", TK_PARAMETER},
-    {"list", TK_LIST},
-    {"input", TK_INPUT},
-    {"output", TK_OUTPUT},
-    {"int", TK_INT},
-    {"real", TK_REAL},
-    {"endwhile", TK_ENDWHILE},
-    {"if", TK_IF},
-    {"then", TK_THEN},
-    {"endif", TK_ENDIF},
-    {"read", TK_READ},
-    {"write", TK_WRITE},
-    {"return", TK_RETURN},
-    {"call", TK_CALL},
-    {"record", TK_RECORD},
-    {"endrecord", TK_ENDRECORD},
-    {"else", TK_ELSE}
-};
 
 typedef struct Token{ 
-    Terminals terminal;
+    Symbols terminal;
     char value[IDLENGTH];
     int lineno;
 } Token;
