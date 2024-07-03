@@ -16,13 +16,13 @@ constructedDatatype TK_UNION TK_RUID
 constructedDatatype TK_RUID
 remaining_list TK_COMMA parameter_list
 remaining_list EPSILON
-stmts typeDefinitons declarations otherstmts returnStmt
-typeDefinitons isRedefined typeDefiniton
-typeDefinitons EPSILON
-isRedefined typeDefiniton
+stmts typeDefinitions declarations otherstmts returnStmt
+typeDefinitions isRedefined typeDefinition
+typeDefinitions EPSILON
+isRedefined typeDefinition
 isRedefined definetypestmt
-typeDefiniton TK_RECORD TK_RUID fieldDefinitions TK_ENDRECORD
-typeDefiniton TK_UNION TK_RUID fieldDefinitions TK_ENDUNION
+typeDefinition TK_RECORD TK_RUID fieldDefinitions TK_ENDRECORD
+typeDefinition TK_UNION TK_RUID fieldDefinitions TK_ENDUNION
 fieldDefinitions fieldDefinition fieldDefinition moreFields
 fieldDefinition TK_TYPE dataType TK_COLON TK_FIELDID TK_SEM
 moreFields fieldDef ̰ƒFinition moreFields

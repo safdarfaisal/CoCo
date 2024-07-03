@@ -3,24 +3,26 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "tree.h"
 
 #define MAXCHILDCOUNT 8
 
 #endif
 
-typedef struct TreeNode{
-    void *data;
-    TreeNode *children[MAXCHILDCOUNT];
-    int numOfChildren;
-} TreeNode;
 
-TreeNode *initNode(int numOfChildren){
+TreeNode *initNode(){
     TreeNode *node = (TreeNode *)(malloc(sizeof(TreeNode)));
-    node->children = (void **)(malloc(sizeof(void *)*MAXCHILDCOUNT));
-    node->numOfChildren = numOfChildren;
     return node;
 }
 
-void addChild(TreeNode *node, TreeNode *child){
+void populateNode(TreeNode *node, void *data){
+    node->data = data;
+}
 
+void addChild(TreeNode *node, TreeNode *child){
+    node->children[node->numOfChildren++] = child;
+}
+
+void deleteNode(TreeNode *node){
+    free(node);
 }

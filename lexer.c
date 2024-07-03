@@ -1,6 +1,6 @@
 #include "lexer.h"
 
-Token *lexedData[5000];
+extern Token *lexedData[5000];
 static int lexPointer = 0;
 
 void death(const char string[]){

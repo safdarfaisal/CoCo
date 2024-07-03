@@ -5,16 +5,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include "helper/definitions.h"
+#include "datastructures/tree.h"
 
 #define MAXPRODLEN 8 
 #define MAXPRODCOUNT 100
-
+#define MAXUNIQUE 6
 
 typedef struct ProdRules{
     Symbols LHS;
     Symbols RHS[MAXPRODLEN];
     int RHScount;
+    int numOfChildren;
 } ProdRules;
+
+
+
+
 
 Symbols stringToSymbols(char string[]){
     for(int i = 0; i < 111; i++){
@@ -34,7 +40,7 @@ const char *symbolToString(Symbols symbol){
     return "";
 }
 
-int main(){
+ProdRules *getProductions(){
     FILE *fp = fopen("grammar.txt", "r");
     ProdRules *rules = (ProdRules *)(malloc(sizeof(ProdRules)*91));
     memset(rules, 0, sizeof(ProdRules)*91);
@@ -61,12 +67,16 @@ int main(){
         // printf("\n");
     }
     // return 0;
-    for(int x = 0; i < 91; i++){
-        printf("%s ", symbolToString(rules[x].LHS));
-        for(int j = 0; j < rules[x].RHScount; j++){
-            printf("%s ", symbolToString(rules[x].RHS[j]));
-        }
-        printf("\n");
-    }
+    // for(int x = 0; x < 91; x++){
+    //     printf("%s ", symbolToString(rules[x].LHS));
+    //     for(int j = 0; j < rules[x].RHScount; j++){
+    //         printf("%s ", symbolToString(rules[x].RHS[j]));
+    //     }
+    //     printf("\n");
+    // }
+    return rules;
 }
+
+TreeNode *generate_parse_tree(){}
+
 #endif
