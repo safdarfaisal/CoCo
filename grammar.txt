@@ -40,10 +40,10 @@ stmt ioStmt
 stmt funCallStmt
 assignmentStmt singleOrRecId TK_ASSIGNOP arithmeticExpression TK_SEM
 singleOrRecId TK_ID singleLeft
-singleLeft TK_ID oneExpansionmoreExpansions
+singleLeft TK_ID oneExpansion moreExpansions
 singleLeft EPSILON
 oneExpansion TK_DOT TK_FIELDID
-moreExpansions oneExpansionmoreExpansions
+moreExpansions oneExpansion moreExpansions
 moreExpansions EPSILON
 funCallStmt outputParameters TK_CALL TK_FUNID TK_WITH TK_PARAMETERS inputParameters TK_SEM
 outputParameters TK_SQL idList TK_SQR TK_ASSIGNOP

@@ -1,13 +1,4 @@
-#ifndef TREE_H
-#define TREE_H
-
-#include <stdio.h>
-#include <stdlib.h>
 #include "tree.h"
-
-#define MAXCHILDCOUNT 8
-
-#endif
 
 
 TreeNode *initNode(){
