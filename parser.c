@@ -1,162 +1,25 @@
-#ifndef PARSER_H  
-#define PARSER_H
+#include "parser.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "helper/definitions.h"
-// #include "datastructures/tree.h"
-// #include "lexer.h"
+// Function to create a new parse tree node
+ParseTreeNode* createNode(Symbols symbol, const char *lexeme) {
+    ParseTreeNode* node = (ParseTreeNode*)malloc(sizeof(ParseTreeNode));
+    node->symbol = symbol;
+    strcpy(node->lexeme, lexeme);
+    node->children = NULL;
+    node->childCount = 0;
+    return node;
+}
 
-#define MAXPRODLEN 8 
-#define MAXPRODCOUNT 100
-// #define MAXUNIQUE 6
-
-// Token structure
-typedef struct Token{
-    Symbols type;
-    char lexeme[100];
-} Token;
-
-// typedef struct ProdRules{
-//     Symbols LHS;
-//     Symbols RHS[MAXPRODLEN];
-//     int RHScount;
-//     int numOfChildren;
-// } ProdRules;
+// Function to add a child to a parse tree node
+void addChild(ParseTreeNode *parent, ParseTreeNode *child) {
+    parent->children = (ParseTreeNode**)realloc(parent->children, (parent->childCount + 1) * sizeof(ParseTreeNode*));
+    parent->children[parent->childCount] = child;
+    parent->childCount++;
+}
 
 
-// Symbols stringToSymbols(char string[]){
-//     for(int i = 0; i < 111; i++){
-//         if(!strcmp(string, StringToSymbols[i].string)){
-//             return StringToSymbols[i].symbol;
-//         }
-//     }
-//     return 0;
-// }
-
-// const char *symbolToString(Symbols symbol){
-//     for (int i = 0; i < 111; i++){
-//         if(StringToSymbols[i].symbol == symbol){
-//             return StringToSymbols[i].string;
-//         }
-//     }
-//     return "";
-// }
-
-// ProdRules *getProductions(){
-//     FILE *fp = fopen("grammar.txt", "r");
-//     ProdRules *rules = (ProdRules *)(malloc(sizeof(ProdRules)*91));
-//     memset(rules, 0, sizeof(ProdRules)*91);
-//     char string[30];
-//     char c;
-//     int i = 0;
-//     while(!feof(fp)){
-//         fscanf(fp, "%29s", string);
-//         rules[i].LHS = stringToSymbols(string);
-//         // printf("%s ", string);
-//         c = fgetc(fp);
-//         int j = 0;
-//         while(c != '\n'){
-//             fscanf(fp, "%29s", string);
-//             rules[i].RHS[j++] = stringToSymbols(string);
-//             // printf("%s ", string);
-//             if(feof(fp)){
-//                 break;
-//             }
-//             c = fgetc(fp);
-//         }
-//         rules[i].RHScount = j;
-//         i++;
-//         // printf("\n");
-//     }
-//     // return 0;
-//     // for(int x = 0; x < 91; x++){
-//     //     printf("%s ", symbolToString(rules[x].LHS));
-//     //     for(int j = 0; j < rules[x].RHScount; j++){
-//     //         printf("%s ", symbolToString(rules[x].RHS[j]));
-//     //     }
-//     //     printf("\n");
-//     // }
-//     return rules;
-// }
-
-// Token *getNextToken(int lexPointer){
-//     return lexedData[lexPointer];
-// }
-
-// typedef struct TokenNode{
-//     Symbols *symbol;
-//     int lineno;
-// } TokenNode;
-
-// TokenNode currentToken;
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-
-
-
-// Forward declarations
-void program();
-void mainFunction();
-void otherFunctions();
-void function();
-void input_par();
-void output_par();
-void parameter_list();
-void dataType();
-void primitiveDatatype();
-void constructedDatatype();
-void remaining_list();
-void stmts();
-void typeDefinitions();
-void isRedefined();
-void typeDefinition();
-void fieldDefinitions();
-void fieldDefinition();
-void moreFields();
-void declarations();
-void declaration();
-void global_or_not();
-void otherstmts();
-void stmt();
-void assignmentStmt();
-void singleOrRecId();
-void singleLeft();
-void oneExpansion();
-void moreExpansions();
-void funCallStmt();
-void outputParameters();
-void inputParameters();
-void iterativeStmt();
-void conditionalStmt();
-void elseStmt();
-void ioStmt();
-void arithmeticExpression();
-void expPrime();
-void term();
-void termPrime();
-void var();
-void factor();
-void highPrecedenceOps();
-void lowPrecedenceOps();
-void booleanExpression();
-void logicalOp();
-void relationalOp();
-void returnStmt();
-void optionalReturn();
-void idList();
-void moreIds();
-void definetypestmt();
-void a();
 
 // Token stream and current token index
-Token *tokens;
-int currentTokenIndex = 0;
-int tokenCount;
 
 Token getCurrentToken() {
     return tokens[currentTokenIndex];
@@ -168,546 +31,636 @@ void advanceToken() {
     }
 }
 
-void match(Symbols expected) {
-    if (getCurrentToken().type == expected) {
+ParseTreeNode* match(Symbols expected) {
+    Token currentToken = getCurrentToken();
+    if (currentToken.type == expected) {
+        ParseTreeNode* node = createNode(currentToken.type, currentToken.lexeme);
         advanceToken();
+        return node;
     } else {
-        printf("Syntax error: Expected %d but found %d\n", expected, getCurrentToken().type);
+        printf("Syntax error: Expected %d but found %d\n", expected, currentToken.type);
         exit(1);
     }
 }
 
 // Function implementations
 
-void program() {
-    otherFunctions();
-    mainFunction();
+ParseTreeNode* program() {
+    ParseTreeNode *node = createNode(nt_program, "program");
+    addChild(node, otherFunctions());
+    addChild(node, mainFunction());
+    return node;
 }
 
-void mainFunction() {
-    match(TK_MAIN);
-    stmts();
-    match(TK_END);
+ParseTreeNode* mainFunction() {
+    ParseTreeNode *node = createNode(nt_mainFunction, "mainFunction");
+    addChild(node, match(TK_MAIN));
+    addChild(node, stmts());
+    addChild(node, match(TK_END));
+    return node;
 }
 
-void otherFunctions() {
+ParseTreeNode* otherFunctions() {
+    ParseTreeNode *node = createNode(nt_otherFunctions, "otherFunctions");
     if (getCurrentToken().type == TK_FUNID) {
-        function();
-        otherFunctions();
-    } else {
-        // EPSILON production
+        addChild(node, function());
+        addChild(node, otherFunctions());
     }
+    return node;
 }
 
-void function() {
-    match(TK_FUNID);
-    input_par();
-    output_par();
-    match(TK_SEM);
-    stmts();
-    match(TK_END);
+ParseTreeNode* function() {
+    ParseTreeNode *node = createNode(nt_function, "function");
+    addChild(node, match(TK_FUNID));
+    addChild(node, input_par());
+    addChild(node, output_par());
+    addChild(node, match(TK_SEM));
+    addChild(node, stmts());
+    addChild(node, match(TK_END));
+    return node;
 }
 
-void input_par() {
-    match(TK_INPUT);
-    match(TK_PARAMETER);
-    match(TK_LIST);
-    match(TK_SQL);
-    parameter_list();
-    match(TK_SQR);
+ParseTreeNode* input_par() {
+    ParseTreeNode *node = createNode(nt_input_par, "input_par");
+    addChild(node, match(TK_INPUT));
+    addChild(node, match(TK_PARAMETER));
+    addChild(node, match(TK_LIST));
+    addChild(node, match(TK_SQL));
+    addChild(node, parameter_list());
+    addChild(node, match(TK_SQR));
+    return node;
 }
 
-void output_par() {
+ParseTreeNode* output_par() {
+    ParseTreeNode *node = createNode(nt_output_par, "output_par");
     if (getCurrentToken().type == TK_OUTPUT) {
-        match(TK_OUTPUT);
-        match(TK_PARAMETER);
-        match(TK_LIST);
-        match(TK_SQL);
-        parameter_list();
-        match(TK_SQR);
-    } else {
-        // EPSILON production
+        addChild(node, match(TK_OUTPUT));
+        addChild(node, match(TK_PARAMETER));
+        addChild(node, match(TK_LIST));
+        addChild(node, match(TK_SQL));
+        addChild(node, parameter_list());
+        addChild(node, match(TK_SQR));
     }
+    return node;
 }
 
-void parameter_list() {
-    dataType();
-    match(TK_ID);
-    remaining_list();
+ParseTreeNode* parameter_list() {
+    ParseTreeNode *node = createNode(nt_parameter_list, "parameter_list");
+    addChild(node, dataType());
+    addChild(node, match(TK_ID));
+    addChild(node, remaining_list());
+    return node;
 }
 
-void dataType() {
+ParseTreeNode* dataType() {
+    ParseTreeNode *node = createNode(nt_dataType, "dataType");
     if (getCurrentToken().type == TK_INT || getCurrentToken().type == TK_REAL) {
-        primitiveDatatype();
+        addChild(node, primitiveDatatype());
     } else if (getCurrentToken().type == TK_RECORD || getCurrentToken().type == TK_UNION || getCurrentToken().type == TK_RUID) {
-        constructedDatatype();
+        addChild(node, constructedDatatype());
     } else {
         printf("Syntax error in dataType\n");
         exit(1);
     }
+    return node;
 }
 
-void primitiveDatatype() {
+ParseTreeNode* primitiveDatatype() {
+    ParseTreeNode *node = createNode(nt_primitiveDatatype, "primitiveDatatype");
     if (getCurrentToken().type == TK_INT) {
-        match(TK_INT);
+        addChild(node, match(TK_INT));
     } else if (getCurrentToken().type == TK_REAL) {
-        match(TK_REAL);
+        addChild(node, match(TK_REAL));
     } else {
         printf("Syntax error in primitiveDatatype\n");
         exit(1);
     }
+    return node;
 }
 
-void constructedDatatype() {
+ParseTreeNode* constructedDatatype() {
+    ParseTreeNode *node = createNode(nt_constructedDatatype, "constructedDatatype");
     if (getCurrentToken().type == TK_RECORD) {
-        match(TK_RECORD);
-        match(TK_RUID);
+        addChild(node, match(TK_RECORD));
+        addChild(node, match(TK_RUID));
     } else if (getCurrentToken().type == TK_UNION) {
-        match(TK_UNION);
-        match(TK_RUID);
+        addChild(node, match(TK_UNION));
+        addChild(node, match(TK_RUID));
     } else if (getCurrentToken().type == TK_RUID) {
-        match(TK_RUID);
+        addChild(node, match(TK_RUID));
     } else {
         printf("Syntax error in constructedDatatype\n");
         exit(1);
     }
+    return node;
 }
 
-void remaining_list() {
+ParseTreeNode* remaining_list() {
+    ParseTreeNode *node = createNode(nt_remaining_list, "remaining_list");
     if (getCurrentToken().type == TK_COMMA) {
-        match(TK_COMMA);
-        parameter_list();
-    } else {
-        // EPSILON production
+        addChild(node, match(TK_COMMA));
+        addChild(node, parameter_list());
     }
+    return node;
 }
 
-void stmts() {
-    typeDefinitions();
-    declarations();
-    otherstmts();
-    returnStmt();
+ParseTreeNode* stmts() {
+    ParseTreeNode *node = createNode(nt_stmts, "stmts");
+    addChild(node, typeDefinitions());
+    addChild(node, declarations());
+    addChild(node, otherstmts());
+    addChild(node, returnStmt());
+    return node;
 }
 
-void typeDefinitions() {
+ParseTreeNode* typeDefinitions() {
+    ParseTreeNode *node = createNode(nt_typeDefinitions, "typeDefinitions");
     if (getCurrentToken().type == TK_RECORD || getCurrentToken().type == TK_UNION) {
-        isRedefined();
-        typeDefinition();
-    } else {
-        // EPSILON production
+        addChild(node, isRedefined());
+        addChild(node, typeDefinition());
     }
+    return node;
 }
 
-void isRedefined() {
+ParseTreeNode* isRedefined() {
+    ParseTreeNode *node = createNode(nt_isRedefined, "isRedefined");
     if (getCurrentToken().type == TK_RECORD || getCurrentToken().type == TK_UNION) {
-        typeDefinition();
+        addChild(node, typeDefinition());
     } else {
-        definetypestmt();
+        addChild(node, definetypestmt());
     }
+    return node;
 }
 
-void typeDefinition() {
+ParseTreeNode* typeDefinition() {
+    ParseTreeNode *node = createNode(nt_typeDefinition, "typeDefinition");
     if (getCurrentToken().type == TK_RECORD) {
-        match(TK_RECORD);
-        match(TK_RUID);
-        fieldDefinitions();
-        match(TK_ENDRECORD);
+        addChild(node, match(TK_RECORD));
+        addChild(node, match(TK_RUID));
+        addChild(node, fieldDefinitions());
+        addChild(node, match(TK_ENDRECORD));
     } else if (getCurrentToken().type == TK_UNION) {
-        match(TK_UNION);
-        match(TK_RUID);
-        fieldDefinitions();
-        match(TK_ENDUNION);
+        addChild(node, match(TK_UNION));
+        addChild(node, match(TK_RUID));
+        addChild(node, fieldDefinitions());
+        addChild(node, match(TK_ENDUNION));
     } else {
         printf("Syntax error in typeDefinition\n");
         exit(1);
     }
+    return node;
 }
 
-void fieldDefinitions() {
-    fieldDefinition();
-    moreFields();
+ParseTreeNode* fieldDefinitions() {
+    ParseTreeNode *node = createNode(nt_fieldDefinitions, "fieldDefinitions");
+    addChild(node, fieldDefinition());
+    addChild(node, moreFields());
+    return node;
 }
 
-void fieldDefinition() {
-    match(TK_TYPE);
-    dataType();
-    match(TK_COLON);
-    match(TK_FIELDID);
-    match(TK_SEM);
+ParseTreeNode* fieldDefinition() {
+    ParseTreeNode *node = createNode(nt_fieldDefinition, "fieldDefinition");
+    addChild(node, match(TK_TYPE));
+    addChild(node, dataType());
+    addChild(node, match(TK_COLON));
+    addChild(node, match(TK_FIELDID));
+    addChild(node, match(TK_SEM));
+    return node;
 }
 
-void moreFields() {
+ParseTreeNode* moreFields() {
+    ParseTreeNode *node = createNode(nt_moreFields, "moreFields");
     if (getCurrentToken().type == TK_TYPE) {
-        fieldDefinition();
-        moreFields();
-    } else {
-        // EPSILON production
+        addChild(node, fieldDefinition());
+        addChild(node, moreFields());
     }
+    return node;
 }
 
-void declarations() {
+ParseTreeNode* declarations() {
+    ParseTreeNode *node = createNode(nt_declarations, "declarations");
     if (getCurrentToken().type == TK_TYPE) {
-        declaration();
-        declarations();
-    } else {
-        // EPSILON production
+        addChild(node, declaration());
+        addChild(node, declarations());
     }
+    return node;
 }
 
-void declaration() {
-    match(TK_TYPE);
-    dataType();
-    match(TK_COLON);
-    match(TK_ID);
-    global_or_not();
-    match(TK_SEM);
+ParseTreeNode* declaration() {
+    ParseTreeNode *node = createNode(nt_declaration, "declaration");
+    addChild(node, match(TK_TYPE));
+    addChild(node, dataType());
+    addChild(node, match(TK_COLON));
+    addChild(node, match(TK_ID));
+    addChild(node, global_or_not());
+    addChild(node, match(TK_SEM));
+    return node;
 }
 
-void global_or_not() {
+ParseTreeNode* global_or_not() {
+    ParseTreeNode *node = createNode(nt_global_or_not, "global_or_not");
     if (getCurrentToken().type == TK_COLON) {
-        match(TK_COLON);
-        match(TK_GLOBAL);
-    } else {
-        // EPSILON production
+        addChild(node, match(TK_COLON));
+        addChild(node, match(TK_GLOBAL));
     }
+    return node;
 }
 
-void otherstmts() {
+ParseTreeNode* otherstmts() {
+    ParseTreeNode *node = createNode(nt_otherstmts, "otherstmts");
     if (getCurrentToken().type == TK_ID || getCurrentToken().type == TK_WHILE || getCurrentToken().type == TK_IF || getCurrentToken().type == TK_READ || getCurrentToken().type == TK_WRITE || getCurrentToken().type == TK_CALL) {
-        stmt();
-        otherstmts();
-    } else {
-        // EPSILON production
+        addChild(node, stmt());
+        addChild(node, otherstmts());
     }
+    return node;
 }
 
-void stmt() {
+ParseTreeNode* stmt() {
+    ParseTreeNode *node = createNode(nt_stmt, "stmt");
     if (getCurrentToken().type == TK_ID) {
-        assignmentStmt();
+        addChild(node, assignmentStmt());
     } else if (getCurrentToken().type == TK_WHILE) {
-        iterativeStmt();
+        addChild(node, iterativeStmt());
     } else if (getCurrentToken().type == TK_IF) {
-        conditionalStmt();
+        addChild(node, conditionalStmt());
     } else if (getCurrentToken().type == TK_READ || getCurrentToken().type == TK_WRITE) {
-        ioStmt();
+        addChild(node, ioStmt());
     } else if (getCurrentToken().type == TK_CALL) {
-        funCallStmt();
+        addChild(node, funCallStmt());
     } else {
         printf("Syntax error in stmt\n");
         exit(1);
     }
+    return node;
 }
 
-void assignmentStmt() {
-    singleOrRecId();
-    match(TK_ASSIGNOP);
-    arithmeticExpression();
-    match(TK_SEM);
+ParseTreeNode* assignmentStmt() {
+    ParseTreeNode *node = createNode(nt_assignmentStmt, "assignmentStmt");
+    addChild(node, singleOrRecId());
+    addChild(node, match(TK_ASSIGNOP));
+    addChild(node, arithmeticExpression());
+    addChild(node, match(TK_SEM));
+    return node;
 }
 
-void singleOrRecId() {
-    match(TK_ID);
-    singleLeft();
+ParseTreeNode* singleOrRecId() {
+    ParseTreeNode *node = createNode(nt_singleOrRecId, "singleOrRecId");
+    addChild(node, match(TK_ID));
+    addChild(node, singleLeft());
+    return node;
 }
 
-void singleLeft() {
+ParseTreeNode* singleLeft() {
+    ParseTreeNode *node = createNode(nt_singleLeft, "singleLeft");
     if (getCurrentToken().type == TK_ID) {
-        match(TK_ID);
-        oneExpansion();
-        moreExpansions();
-    } else {
-        // EPSILON production
+        addChild(node, match(TK_ID));
+        addChild(node, oneExpansion());
+        addChild(node, moreExpansions());
     }
+    return node;
 }
 
-void oneExpansion() {
-    match(TK_DOT);
-    match(TK_FIELDID);
+ParseTreeNode* oneExpansion() {
+    ParseTreeNode *node = createNode(nt_oneExpansion, "oneExpansion");
+    addChild(node, match(TK_DOT));
+    addChild(node, match(TK_FIELDID));
+    return node;
 }
 
-void moreExpansions() {
+ParseTreeNode* moreExpansions() {
+    ParseTreeNode *node = createNode(nt_moreExpansions, "moreExpansions");
     if (getCurrentToken().type == TK_DOT) {
-        oneExpansion();
-        moreExpansions();
-    } else {
-        // EPSILON production
+        addChild(node, oneExpansion());
+        addChild(node, moreExpansions());
     }
+    return node;
 }
 
-void funCallStmt() {
-    outputParameters();
-    match(TK_CALL);
-    match(TK_FUNID);
-    match(TK_WITH);
-    match(TK_PARAMETERS);
-    inputParameters();
-    match(TK_SEM);
+ParseTreeNode* funCallStmt() {
+    ParseTreeNode *node = createNode(nt_funCallStmt, "funCallStmt");
+    addChild(node, outputParameters());
+    addChild(node, match(TK_CALL));
+    addChild(node, match(TK_FUNID));
+    addChild(node, match(TK_WITH));
+    addChild(node, match(TK_PARAMETERS));
+    addChild(node, inputParameters());
+    addChild(node, match(TK_SEM));
+    return node;
 }
 
-void outputParameters() {
+ParseTreeNode* outputParameters() {
+    ParseTreeNode *node = createNode(nt_outputParameters, "outputParameters");
     if (getCurrentToken().type == TK_SQL) {
-        match(TK_SQL);
-        idList();
-        match(TK_SQR);
-        match(TK_ASSIGNOP);
-    } else {
-        // EPSILON production
+        addChild(node, match(TK_SQL));
+        addChild(node, idList());
+        addChild(node, match(TK_SQR));
+        addChild(node, match(TK_ASSIGNOP));
     }
+    return node;
 }
 
-void inputParameters() {
-    match(TK_SQL);
-    idList();
-    match(TK_SQR);
+ParseTreeNode* inputParameters() {
+    ParseTreeNode *node = createNode(nt_inputParameters, "inputParameters");
+    addChild(node, match(TK_SQL));
+    addChild(node, idList());
+    addChild(node, match(TK_SQR));
+    return node;
 }
 
-void iterativeStmt() {
-    match(TK_WHILE);
-    match(TK_OP);
-    booleanExpression();
-    match(TK_CL);
-    stmt();
-    otherstmts();
-    match(TK_ENDWHILE);
+ParseTreeNode* iterativeStmt() {
+    ParseTreeNode *node = createNode(nt_iterativeStmt, "iterativeStmt");
+    addChild(node, match(TK_WHILE));
+    addChild(node, match(TK_OP));
+    addChild(node, booleanExpression());
+    addChild(node, match(TK_CL));
+    addChild(node, stmt());
+    addChild(node, otherstmts());
+    addChild(node, match(TK_ENDWHILE));
+    return node;
 }
 
-void conditionalStmt() {
-    match(TK_IF);
-    match(TK_OP);
-    booleanExpression();
-    match(TK_CL);
-    match(TK_THEN);
-    stmt();
-    otherstmts();
-    elseStmt();
+ParseTreeNode* conditionalStmt() {
+    ParseTreeNode *node = createNode(nt_conditionalStmt, "conditionalStmt");
+    addChild(node, match(TK_IF));
+    addChild(node, match(TK_OP));
+    addChild(node, booleanExpression());
+    addChild(node, match(TK_CL));
+    addChild(node, match(TK_THEN));
+    addChild(node, stmt());
+    addChild(node, otherstmts());
+    addChild(node, elseStmt());
+    return node;
 }
 
-void elseStmt() {
+ParseTreeNode* elseStmt() {
+    ParseTreeNode *node = createNode(nt_elseStmt, "elseStmt");
     if (getCurrentToken().type == TK_ELSE) {
-        match(TK_ELSE);
-        otherstmts();
-        match(TK_ENDIF);
+        addChild(node, match(TK_ELSE));
+        addChild(node, otherstmts());
+        addChild(node, match(TK_ENDIF));
     } else if (getCurrentToken().type == TK_ENDIF) {
-        match(TK_ENDIF);
+        addChild(node, match(TK_ENDIF));
     } else {
         printf("Syntax error in elseStmt\n");
         exit(1);
     }
+    return node;
 }
 
-void var(){
-    if(getCurrentToken().type == TK_ID){
-        singleOrRecId();
-    } else if (getCurrentToken().type == TK_NUM){
-        match(TK_NUM);
-    } else if (getCurrentToken().type == TK_RNUM){
-        match(TK_RNUM);
+ParseTreeNode* var() {
+    ParseTreeNode *node = createNode(nt_var, "var");
+    if (getCurrentToken().type == TK_ID) {
+        addChild(node, singleOrRecId());
+    } else if (getCurrentToken().type == TK_NUM) {
+        addChild(node, match(TK_NUM));
+    } else if (getCurrentToken().type == TK_RNUM) {
+        addChild(node, match(TK_RNUM));
     }
+    return node;
 }
 
-void ioStmt() {
+ParseTreeNode* ioStmt() {
+    ParseTreeNode *node = createNode(nt_ioStmt, "ioStmt");
     if (getCurrentToken().type == TK_READ) {
-        match(TK_READ);
-        match(TK_OP);
-        var();
-        match(TK_CL);
-        match(TK_SEM);
+        addChild(node, match(TK_READ));
+        addChild(node, match(TK_OP));
+        addChild(node, var());
+        addChild(node, match(TK_CL));
+        addChild(node, match(TK_SEM));
     } else if (getCurrentToken().type == TK_WRITE) {
-        match(TK_WRITE);
-        match(TK_OP);
-        var();
-        match(TK_CL);
-        match(TK_SEM);
+        addChild(node, match(TK_WRITE));
+        addChild(node, match(TK_OP));
+        addChild(node, var());
+        addChild(node, match(TK_CL));
+        addChild(node, match(TK_SEM));
     } else {
         printf("Syntax error in ioStmt\n");
         exit(1);
     }
+    return node;
 }
 
-void arithmeticExpression() {
-    term();
-    expPrime();
+ParseTreeNode* arithmeticExpression() {
+    ParseTreeNode *node = createNode(nt_arithmeticExpression, "arithmeticExpression");
+    addChild(node, term());
+    addChild(node, expPrime());
+    return node;
 }
 
-void expPrime() {
+ParseTreeNode* expPrime() {
+    ParseTreeNode *node = createNode(nt_expPrime, "expPrime");
     if (getCurrentToken().type == TK_PLUS || getCurrentToken().type == TK_MINUS) {
-        lowPrecedenceOps();
-        term();
-        expPrime();
-    } else {
-        // EPSILON production
+        addChild(node, lowPrecedenceOps());
+        addChild(node, term());
+        addChild(node, expPrime());
     }
+    return node;
 }
 
-void term() {
-    factor();
-    termPrime();
+ParseTreeNode* term() {
+    ParseTreeNode *node = createNode(nt_term, "term");
+    addChild(node, factor());
+    addChild(node, termPrime());
+    return node;
 }
 
-void termPrime() {
+ParseTreeNode* termPrime() {
+    ParseTreeNode *node = createNode(nt_termPrime, "termPrime");
     if (getCurrentToken().type == TK_MUL || getCurrentToken().type == TK_DIV) {
-        highPrecedenceOps();
-        factor();
-        termPrime();
-    } else {
-        // EPSILON production
+        addChild(node, highPrecedenceOps());
+        addChild(node, factor());
+        addChild(node, termPrime());
     }
+    return node;
 }
 
-void factor() {
+ParseTreeNode* factor() {
+    ParseTreeNode *node = createNode(nt_factor, "factor");
     if (getCurrentToken().type == TK_OP) {
-        match(TK_OP);
-        arithmeticExpression();
-        match(TK_CL);
+        addChild(node, match(TK_OP));
+        addChild(node, arithmeticExpression());
+        addChild(node, match(TK_CL));
     } else if (getCurrentToken().type == TK_ID || getCurrentToken().type == TK_NUM || getCurrentToken().type == TK_RNUM) {
-        var();
+        addChild(node, var());
     } else {
         printf("Syntax error in factor\n");
         exit(1);
     }
+    return node;
 }
 
-void highPrecedenceOps() {
+ParseTreeNode* highPrecedenceOps() {
+    ParseTreeNode *node = createNode(nt_highPrecedenceOps, "highPrecedenceOps");
     if (getCurrentToken().type == TK_MUL) {
-        match(TK_MUL);
+        addChild(node, match(TK_MUL));
     } else if (getCurrentToken().type == TK_DIV) {
-        match(TK_DIV);
+        addChild(node, match(TK_DIV));
     } else {
         printf("Syntax error in highPrecedenceOps\n");
         exit(1);
     }
+    return node;
 }
 
-void lowPrecedenceOps() {
+ParseTreeNode* lowPrecedenceOps() {
+    ParseTreeNode *node = createNode(nt_lowPrecedenceOps, "lowPrecedenceOps");
     if (getCurrentToken().type == TK_PLUS) {
-        match(TK_PLUS);
+        addChild(node, match(TK_PLUS));
     } else if (getCurrentToken().type == TK_MINUS) {
-        match(TK_MINUS);
+        addChild(node, match(TK_MINUS));
     } else {
         printf("Syntax error in lowPrecedenceOps\n");
         exit(1);
     }
+    return node;
 }
 
-void booleanExpression() {
+ParseTreeNode* booleanExpression() {
+    ParseTreeNode *node = createNode(nt_booleanExpression, "booleanExpression");
     if (getCurrentToken().type == TK_OP) {
-        match(TK_OP);
-        booleanExpression();
-        match(TK_CL);
-        logicalOp();
-        match(TK_OP);
-        booleanExpression();
-        match(TK_CL);
-        match(TK_SEM);
+        addChild(node, match(TK_OP));
+        addChild(node, booleanExpression());
+        addChild(node, match(TK_CL));
+        addChild(node, logicalOp());
+        addChild(node, match(TK_OP));
+        addChild(node, booleanExpression());
+        addChild(node, match(TK_CL));
+        addChild(node, match(TK_SEM));
     } else if (getCurrentToken().type == TK_ID || getCurrentToken().type == TK_NUM || getCurrentToken().type == TK_RNUM) {
-        var();
-        relationalOp();
-        var();
+        addChild(node, var());
+        addChild(node, relationalOp());
+        addChild(node, var());
     } else if (getCurrentToken().type == TK_NOT) {
-        match(TK_NOT);
-        match(TK_OP);
-        booleanExpression();
-        match(TK_CL);
+        addChild(node, match(TK_NOT));
+        addChild(node, match(TK_OP));
+        addChild(node, booleanExpression());
+        addChild(node, match(TK_CL));
     } else {
         printf("Syntax error in booleanExpression\n");
         exit(1);
     }
+    return node;
 }
 
-void logicalOp() {
+ParseTreeNode* logicalOp() {
+    ParseTreeNode *node = createNode(nt_logicalOp, "logicalOp");
     if (getCurrentToken().type == TK_AND) {
-        match(TK_AND);
+        addChild(node, match(TK_AND));
     } else if (getCurrentToken().type == TK_OR) {
-        match(TK_OR);
+        addChild(node, match(TK_OR));
     } else {
         printf("Syntax error in logicalOp\n");
         exit(1);
     }
+    return node;
 }
 
-void relationalOp() {
+ParseTreeNode* relationalOp() {
+    ParseTreeNode *node = createNode(nt_relationalOp, "relationalOp");
     if (getCurrentToken().type == TK_LT) {
-        match(TK_LT);
+        addChild(node, match(TK_LT));
     } else if (getCurrentToken().type == TK_LE) {
-        match(TK_LE);
+        addChild(node, match(TK_LE));
     } else if (getCurrentToken().type == TK_EQ) {
-        match(TK_EQ);
+        addChild(node, match(TK_EQ));
     } else if (getCurrentToken().type == TK_GT) {
-        match(TK_GT);
+        addChild(node, match(TK_GT));
     } else if (getCurrentToken().type == TK_GE) {
-        match(TK_GE);
+        addChild(node, match(TK_GE));
     } else if (getCurrentToken().type == TK_NE) {
-        match(TK_NE);
+        addChild(node, match(TK_NE));
     } else {
         printf("Syntax error in relationalOp\n");
         exit(1);
     }
+    return node;
 }
 
-void returnStmt() {
-    match(TK_RETURN);
-    optionalReturn();
-    match(TK_SEM);
+ParseTreeNode* returnStmt() {
+    ParseTreeNode *node = createNode(nt_returnStmt, "returnStmt");
+    addChild(node, match(TK_RETURN));
+    addChild(node, optionalReturn());
+    addChild(node, match(TK_SEM));
+    return node;
 }
 
-void optionalReturn() {
+ParseTreeNode* optionalReturn() {
+    ParseTreeNode *node = createNode(nt_optionalReturn, "optionalReturn");
     if (getCurrentToken().type == TK_SQL) {
-        match(TK_SQL);
-        idList();
-        match(TK_SQR);
-    } else {
-        // EPSILON production
+        addChild(node, match(TK_SQL));
+        addChild(node, idList());
+        addChild(node, match(TK_SQR));
     }
+    return node;
 }
 
-void idList() {
-    match(TK_ID);
-    moreIds();
+ParseTreeNode* idList() {
+    ParseTreeNode *node = createNode(nt_idList, "idList");
+    addChild(node, match(TK_ID));
+    addChild(node, moreIds());
+    return node;
 }
 
-void moreIds() {
+ParseTreeNode* moreIds() {
+    ParseTreeNode *node = createNode(nt_moreIds, "moreIds");
     if (getCurrentToken().type == TK_COMMA) {
-        match(TK_COMMA);
-        idList();
-    } else {
-        // EPSILON production
+        addChild(node, match(TK_COMMA));
+        addChild(node, idList());
     }
+    return node;
 }
 
-void definetypestmt() {
-    match(TK_DEFINETYPE);
-    a();
-    match(TK_RUID);
-    match(TK_AS);
-    match(TK_RUID);
+ParseTreeNode* definetypestmt() {
+    ParseTreeNode *node = createNode(nt_definetypestmt, "definetypestmt");
+    addChild(node, match(TK_DEFINETYPE));
+    addChild(node, a());
+    addChild(node, match(TK_RUID));
+    addChild(node, match(TK_AS));
+    addChild(node, match(TK_RUID));
+    return node;
 }
 
-void a() {
+ParseTreeNode* a() {
+    ParseTreeNode *node = createNode(nt_a, "a");
     if (getCurrentToken().type == TK_RECORD) {
-        match(TK_RECORD);
+        addChild(node, match(TK_RECORD));
     } else if (getCurrentToken().type == TK_UNION) {
-        match(TK_UNION);
+        addChild(node, match(TK_UNION));
     } else {
         printf("Syntax error in a\n");
         exit(1);
+    }
+    return node;
+}
+
+void printParseTree(ParseTreeNode* node, int level) {
+    if (node == NULL) return;
+    for (int i = 0; i < level; ++i) printf("  ");
+    printf("%s\n", node->lexeme);
+    for (int i = 0; i < node->childCount; ++i) {
+        printParseTree(node->children[i], level + 1);
     }
 }
 
 int main() {
     // Example token stream
     Token exampleTokens[] = {
-        {TK_MAIN, "_main"},  {TK_TYPE, "type"}, {TK_INT, "int"}, {TK_COLON, ":"}, 
+        {TK_MAIN, "_main"}, {TK_TYPE, "type"}, {TK_INT, "int"}, {TK_COLON, ":"},
         {TK_ID, "x"}, {TK_SEM, ";"},
-        {TK_RETURN, "return"}, {TK_SEM,";"},{TK_END, "end"}, {EPSILON, ""}
+        {TK_RETURN, "return"}, {TK_SEM, ";"}, {TK_END, "end"}, {EPSILON, ""}
     };
-    
+    // Token exampleTokens[] = {
+    //     {TK_MAIN, "_main"}, 
+    //     {TK_RETURN, "return"}, {TK_SEM, ";"}, {TK_END, "end"}, {EPSILON, ""}
+    // };
+
     tokens = exampleTokens;
     tokenCount = sizeof(exampleTokens) / sizeof(exampleTokens[0]);
-    
-    program();
-    
+
+    ParseTreeNode *parseTree = program();
+    printParseTree(parseTree, 0);
+
     printf("Parsing completed successfully.\n");
     return 0;
 }
 
-#endif

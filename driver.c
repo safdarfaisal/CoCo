@@ -1,8 +1,9 @@
-// #include "lexer.h"
-// #include <stdio.h>
+#include ""
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <source-file>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
 
-// int main(int argc, char const *argv[])
-// {
-//     char *    
-//     return 0;
-// }
+    char *source_code = read_file(argv[1]);
+    Lexer lexer = init_lexer(source_code);

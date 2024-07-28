@@ -1,0 +1,22 @@
+program
+  otherFunctions
+  mainFunction
+    stmts
+      typeDefinitions
+      declarations
+        declaration
+          type
+          dataType
+            primitiveDatatype
+              int
+          :
+          x
+          global_or_not
+          ;
+        declarations
+      otherstmts
+      returnStmt
+        return
+        optionalReturn
+        ;
+    end

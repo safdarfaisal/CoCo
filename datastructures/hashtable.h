@@ -14,12 +14,12 @@ typedef struct HashNode {
 
 typedef struct HashTable{
     Llist *value[TABLESIZE]; // Linked list of hashNodes 
-    int (*hash)(char *);    
+    int (*hash)(void *);    
 } HashTable;
 
 HashNode *initHashNode(int key, void *value);
 void setHashFunc(HashTable *table, int (*hash)(char *));
-HashTable *createHashTable(int (*hash)(char *));
+HashTable *createHashTable(int (*hash)(void *));
 void insert(HashTable *table, void *value, char *key);
 void *getHashValue(HashTable *table, char *key, int (*cmp)(void *, void *));
 void deleteValue(HashTable *table, char *key, int (*cmp)(void *, void *));

@@ -20,4 +20,4 @@ _main
     [c2d3, c3d2] <--- call _foo1 with parameter list [c3b4, c3b5];
     write(c3b4);
     write(c3b5);
-_end
+end
