@@ -22,9 +22,16 @@ readInt:
     mov esi, input
     xor eax, eax
     xor ebx, ebx
-atoi_convert:    
+    mov bl, buffer_size
+.atoi_convert:    
     movzx ecx, byte [esi]
-    movzx ebx, buffer_size
+    cmp ecx, '-'
+    ; set ebx to 1, so to neg instruction can be triggered.
+    jne posIntConvert
+    mov bh, 1
+    inc esi
+.posIntConvert:
+    movzx ecx, byte [esi]
     cmp ecx, 10
     je done_convert
     cmp ecx, 0x30
@@ -35,17 +42,23 @@ atoi_convert:
     imul eax, eax, 10
     add eax, ecx
     inc esi
-    dec ebx
-    cmp ebx, 0
+    dec bl
+    cmp bl, 0
     je done_convert
     jmp atoi_convert
-done_convert:
+.checkNegate:
+    cmp bh, 1
+    je negateMem
+.return:
+    push eax
+    ret
+.negateMem:
+    neg eax
     push eax
     ret
 
 
-;printInt : 
 
+;printInt : 
 printInt:
     ;get memory address from stack
-    
