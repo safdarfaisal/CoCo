@@ -20,7 +20,7 @@ typedef struct TwinBuffer {
     FILE *fp;
 } TwinBuffer;
 
-Buffer *intiBuffer();
+Buffer *initBuffer();
 size_t loadBuffer(Buffer *buffer, FILE *fp);
 TwinBuffer *initTwinBuffer();
 FILE *createFilePointer(char *path);

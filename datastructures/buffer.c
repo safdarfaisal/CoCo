@@ -114,7 +114,7 @@ char getCharacter(TwinBuffer *buffer){
 }
 
 void ungetcBuffer(TwinBuffer *buffer, char *c){
-    if(!buffer)    KILL
+    if(!buffer)    KILL("Twinbuffer not initialized")
     Buffer *currBuffer = buffer->isFirst ? buffer->firstBuffer : buffer-> secondBuffer;
     currBuffer->forward--;
 }

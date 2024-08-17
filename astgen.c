@@ -20,8 +20,6 @@ typedef struct Token {
 typedef struct ParseTreeNode {
     Symbols symbol;
     char lexeme[100];
-    boolean isSpecialNode;
-    void *specialData;
     struct ParseTreeNode *parent;
     struct ParseTreeNode **children;
     int currChild;
@@ -34,20 +32,10 @@ ParseTreeNode* createNode(Symbols symbol, const char *lexeme) {
     node->symbol = symbol;
     node->parent=NULL;
     strcpy(node->lexeme, lexeme);
-    node->specialData = NULL;
-    node->isSpecialNode = FALSE;
     node->children = NULL;
     node->childCount = 0;
     node->currChild = 0;
     return node;
-}
-
-void setNodeToSpecial(ParseTreeNode *node, void *specialData){
-    if (!specialData){
-        return;
-    }
-    node->specialData = specialData;
-    node->isSpecialNode = TRUE;
 }
 
 // Function to add a child to a parse tree node
@@ -59,7 +47,17 @@ void addChild(ParseTreeNode *parent, ParseTreeNode *child) {
     if(!child){
         return;
     }
-    child->parent = parent;
+    child->parent = parent;  
+}
+
+void traverse_and_apply(ParseTreeNode *node, void (* apply)(ParseTreeNode *)){
+    if(!node){
+        return;
+    } 
+    for (int i = 0; i < node->childCount; i++){
+        traverse_and_apply(node->children[i], apply);
+    }
+
     
 }
 
@@ -441,6 +439,8 @@ ParseTreeNode* otherstmts(ParseTreeNode *node) {
         
         stmt(node);
         addChild(node, otherstmts(node));
+    } else {
+        return NULL;
     }
     return node;
 }
@@ -477,7 +477,7 @@ ParseTreeNode* singleOrRecId() {
     ParseTreeNode *variableNode = match(TK_ID, TRUE);
     addChild(node, variableNode);
     singleLeft(variableNode);
-    return node;
+    return variableNode;
 }
 
 ParseTreeNode* singleLeft(ParseTreeNode *node) {
@@ -677,8 +677,9 @@ ParseTreeNode* factor() {
 
     if (getCurrentToken().type == TK_OP) {
         match_f(TK_OP);
-        return arithmeticExpression();
+        ParseTreeNode *node = arithmeticExpression();
         match_f(TK_CL);
+        return node;
     } else if (getCurrentToken().type == TK_ID || getCurrentToken().type == TK_NUM || getCurrentToken().type == TK_RNUM) {
         return var();
     } else {
@@ -850,6 +851,7 @@ ParseTreeNode* a() {
 }
 
 void printParseTree(ParseTreeNode* node, int level) {
+    if(level > 10) return ;
     if (node == NULL) return;
     for (int i = 0; i < level; ++i) printf("  ");
     printf("%s\n", node->lexeme);
@@ -860,9 +862,15 @@ void printParseTree(ParseTreeNode* node, int level) {
 
 int main() {
     // Example token stream
+    // Token declarationEx[] = {
+    //     {TK_MAIN, "_main"}, {TK_TYPE, "type"}, {TK_INT, "int"}, {TK_COLON, ":"},
+    //     {TK_ID, "x"},{TK_COLON, ':'},{TK_GLOBAL, "global"} ,{TK_SEM, ";"},
+    //     {TK_RETURN, "return"}, {TK_SEM, ";"}, {TK_END, "end"}, {EPSILON, ""}
+    // };
+
     Token exampleTokens[] = {
-        {TK_MAIN, "_main"}, {TK_TYPE, "type"}, {TK_INT, "int"}, {TK_COLON, ":"},
-        {TK_ID, "x"},{TK_COLON, ':'},{TK_GLOBAL, "global"} ,{TK_SEM, ";"},
+        {TK_MAIN, "_main"}, {TK_ID, "c3d2"}, {TK_ASSIGNOP, "<---"}, {TK_ID, "c3"},
+        {TK_MUL, "*"},{TK_OP, "("},{TK_ID, "c3"},{TK_PLUS, "+"}, {TK_ID, "c4"},{TK_CL,")"},{TK_SEM, ";"},
         {TK_RETURN, "return"}, {TK_SEM, ";"}, {TK_END, "end"}, {EPSILON, ""}
     };
 
@@ -870,6 +878,7 @@ int main() {
     //     {TK_MAIN, "_main"}, 
     //     {TK_RETURN, "return"}, {TK_SEM, ";"}, {TK_END, "end"}, {EPSILON, ""}
     // };
+    // Token *exampleTokens = assignVarEx;
     tokens = exampleTokens;
     tokenCount = sizeof(exampleTokens) / sizeof(exampleTokens[0]);
 
@@ -881,3 +890,5 @@ int main() {
 }   
 
 #endif
+
+// c3d2 <--- c3 * c3;

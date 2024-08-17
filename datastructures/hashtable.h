@@ -19,7 +19,7 @@ typedef struct HashTable{
 
 HashNode *initHashNode(int key, void *value);
 void setHashFunc(HashTable *table, int (*hash)(char *));
-HashTable *createHashTable(int (*hash)(void *));
+HashTable *createHashTable(int (*hash)(char *));
 void insert(HashTable *table, void *value, char *key);
 void *getHashValue(HashTable *table, char *key, int (*cmp)(void *, void *));
 void deleteValue(HashTable *table, char *key, int (*cmp)(void *, void *));

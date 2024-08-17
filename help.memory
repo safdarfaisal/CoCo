@@ -1,0 +1,29 @@
+Data segment
+
+
+Code segment
+
+foo1:
+    .
+    .
+    .
+    .
+    .
+main:
+    .
+    .
+    .
+    .
+    .
+    .
+    .
+    .
+    .
+    .
+    .
+
+datatypes and memory
+    int : 4 bytes
+    real : 4 bytes 
+    records :  
+    unions : 

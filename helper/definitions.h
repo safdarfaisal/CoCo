@@ -5,7 +5,7 @@
 #define MAX(x,y) x > y ? x : y
 #define BUFFERSIZE 2000
 #define EOB '$'
-#define KILL perror("TwinBuffer not initialized"); exit(EXIT_FAILURE);
+#define KILL(x) perror(x); exit(EXIT_FAILURE);
 #define NONTERMINALS  
 #define TERMINALS 57
 #define IDLENGTH 30
@@ -121,6 +121,8 @@ typedef enum Symbols {
     TK_GE,
     TK_EQ,
     TK_NE,
+    TK_ERROR,
+    TK_EOF,
     EPSILON
 } Symbols;
 

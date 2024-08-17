@@ -39,8 +39,8 @@ stmt conditionalStmt
 stmt ioStmt
 stmt funCallStmt
 assignmentStmt singleOrRecId TK_ASSIGNOP arithmeticExpression TK_SEM
-singleOrRecId TK_ID singleLeft
-singleLeft TK_ID oneExpansion moreExpansions
+singleOrRecId TK_ID singleLeft 
+singleLeft oneExpansion moreExpansions
 singleLeft EPSILON
 oneExpansion TK_DOT TK_FIELDID
 moreExpansions oneExpansion moreExpansions
