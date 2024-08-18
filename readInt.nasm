@@ -28,7 +28,7 @@ print_str:
 
 
 
-; print_int : calls printf (can't test)
+; print_int : calls printf 
 
 
 ; read_str : calls sys_read to read from console

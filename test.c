@@ -1,7 +1,12 @@
 #include <stdio.h>
 
 int main(){
-    int x = 25;
-    printf("Hello world %d", x);
-    return 0;
+    struct test
+    {
+        int x;
+        int y;
+    };
+
+    printf("%lu\n",sizeof(struct test));
+    
 }
