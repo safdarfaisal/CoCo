@@ -11,7 +11,7 @@ ection .bss
     c3b4 resd 1
     c3b5 resd 1
     c3 resd 1
-    b2c3 resd 1s
+    b2c3 resd 1
     c3d2 resd 1
     c2b3 resd 1
     c2d3 resd 1

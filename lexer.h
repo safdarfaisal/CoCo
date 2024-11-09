@@ -2,98 +2,40 @@
 #define LEXER_H
 
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include "helper/definitions.h"
 
-#define MAX_BUFFER_SIZE 1024
+// There is a line number discrepancy (not sure from where)
 
-typedef enum {
-    TK_ASSIGNOP,
-    TK_COMMENT,
-    TK_FIELDID,
-    TK_ID,
-    TK_NUM,
-    TK_RNUM,
-    TK_FUNID,
-    TK_RUID,
-    TK_WITH,
-    TK_PARAMETERS,
-    TK_END,
-    TK_WHILE,
-    TK_UNION,
-    TK_ENDUNION,
-    TK_DEFINETYPE,
-    TK_AS,
-    TK_TYPE,
-    TK_MAIN,
-    TK_GLOBAL,
-    TK_PARAMETER,
-    TK_LIST,
-    TK_SQL,
-    TK_SQR,
-    TK_INPUT,
-    TK_OUTPUT,
-    TK_INT,
-    TK_REAL,
-    TK_COMMA,
-    TK_SEM,
-    TK_COLON,
-    TK_DOT,
-    TK_ENDWHILE,
-    TK_OP,
-    TK_CL,
-    TK_IF,
-    TK_THEN,
-    TK_ENDIF,
-    TK_READ,
-    TK_WRITE,
-    TK_RETURN,
-    TK_PLUS,
-    TK_MINUS,
-    TK_MUL,
-    TK_DIV,
-    TK_CALL,
-    TK_RECORD,
-    TK_ENDRECORD,
-    TK_ELSE,
-    TK_AND,
-    TK_OR,
-    TK_NOT,
-    TK_LT,
-    TK_LE,
-    TK_EQ,
-    TK_GT,
-    TK_GE,
-    TK_NE,
-    TK_ERROR,
-    TK_EOF
-} TokenType;
-
-typedef struct {
-    TokenType type;
-    char lexeme[100];
-    int line_no;
-} Token;
-
-typedef struct {
-    char *source;
-    size_t source_size;
-    size_t current;
-    int line_no;
-} Lexer;
-
-Lexer init_lexer(const char* source);
-int is_eof(Lexer *lexer);
-char advance (Lexer *lexer);
-char peek(Lexer *lexer);
-char peek_next(Lexer *lexer);
-void skip_whitespace(Lexer *lexer);
-void skip_comment(Lexer *lexer);
-Token make_token(Lexer *lexer, TokenType type, const char *lexeme);
-TokenType check_keyword(const char *lexeme);
-Token lex(Lexer *lexer);
-char *read_file(const char *filename);
+const KeywordPair lex_keywords[27] = {
+    {.keyword = "with", .enumVal= {.t = TK_WITH }},
+    {.keyword =  "while", .enumVal= {.t = TK_WHILE }},
+    {.keyword =  "parameters", .enumVal= {.t = TK_PARAMETERS }},
+    {.keyword =  "end", .enumVal= {.t = TK_END }},
+    {.keyword =  "union", .enumVal= {.t = TK_UNION }},
+    {.keyword =  "endunion", .enumVal= {.t = TK_ENDUNION }},
+    {.keyword =  "definetype", .enumVal= {.t = TK_DEFINETYPE }},
+    {.keyword =  "as", .enumVal= {.t = TK_AS }},
+    {.keyword =  "type", .enumVal= {.t = TK_TYPE }},
+    {.keyword =  "global", .enumVal= {.t = TK_GLOBAL }},
+    {.keyword =  "parameter", .enumVal= {.t = TK_PARAMETER }},
+    {.keyword =  "list", .enumVal= {.t = TK_LIST }},
+    {.keyword =  "input", .enumVal= {.t = TK_INPUT }},
+    {.keyword =  "output", .enumVal= {.t = TK_OUTPUT }},
+    {.keyword =  "int", .enumVal= {.t = TK_INT }},
+    {.keyword =  "real", .enumVal= {.t = TK_REAL }},
+    {.keyword =  "endwhile", .enumVal= {.t = TK_ENDWHILE }},
+    {.keyword =  "if", .enumVal= {.t = TK_IF }},
+    {.keyword =  "then", .enumVal= {.t = TK_THEN }},
+    {.keyword =  "endif", .enumVal= {.t = TK_ENDIF }},
+    {.keyword =  "read", .enumVal= {.t = TK_READ }},
+    {.keyword =  "write", .enumVal= {.t = TK_WRITE }},
+    {.keyword =  "return", .enumVal= {.t = TK_RETURN }},
+    {.keyword =  "call", .enumVal= {.t = TK_CALL }},
+    {.keyword =  "record", .enumVal= {.t = TK_RECORD }},
+    {.keyword =  "endrecord", .enumVal= {.t = TK_ENDRECORD }},
+    {.keyword =  "else", .enumVal= {.t = TK_ELSE }}
+};
 
 #endif

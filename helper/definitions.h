@@ -3,7 +3,6 @@
 
 #define MIN(x,y) x < y ? x : y
 #define MAX(x,y) x > y ? x : y
-#define BUFFERSIZE 2000
 #define EOB '$'
 #define KILL(x) perror(x); exit(EXIT_FAILURE);
 #define NONTERMINALS  
@@ -11,7 +10,8 @@
 #define IDLENGTH 30
 #define MAXUNIQUE 8
 
-typedef enum Symbols {
+
+typedef enum {
     nt_program,
     nt_mainFunction,
     nt_otherFunctions,
@@ -63,7 +63,11 @@ typedef enum Symbols {
     nt_idList,
     nt_moreIds,
     nt_definetypestmt,
-    nt_a,
+    nt_a
+} NonTerminal;
+
+// A list of all the possible terminals from source code
+typedef enum {
     TK_ASSIGNOP,
     TK_COMMENT,
     TK_FIELDID,
@@ -117,13 +121,17 @@ typedef enum Symbols {
     TK_NOT,
     TK_LT,
     TK_LE,
+    TK_EQ,
     TK_GT,
     TK_GE,
-    TK_EQ,
     TK_NE,
     TK_ERROR,
-    TK_EOF,
-    EPSILON
+    TK_EOF
+} Terminal;
+
+typedef union {
+    NonTerminal nt;
+    Terminal t;
 } Symbols;
 
 
@@ -133,105 +141,76 @@ typedef struct KeywordPair{
 
 } KeywordPair; 
 
-typedef struct NonTerminal {
-    Symbols NonTerminal;
-    int nextProductions[MAXUNIQUE];
-    int numOfNextProductions;
-} NonTerminal;
+// typedef struct _NonTerminal {
+//     NonTerminals _NonTerminal;
+//     int nextProductions[MAXUNIQUE];
+//     int numOfNextProductions;
+// } _NonTerminal;
 
 
-const KeywordPair keywords[27] = {
-    {"with", TK_WITH},
-    {"while", TK_WHILE},
-    {"parameters", TK_PARAMETERS},
-    {"end", TK_END},
-    {"union", TK_UNION},
-    {"endunion", TK_ENDUNION},
-    {"definetype", TK_DEFINETYPE},
-    {"as", TK_AS},
-    {"type", TK_TYPE},
-    {"global", TK_GLOBAL},
-    {"parameter", TK_PARAMETER},
-    {"list", TK_LIST},
-    {"input", TK_INPUT},
-    {"output", TK_OUTPUT},
-    {"int", TK_INT},
-    {"real", TK_REAL},
-    {"endwhile", TK_ENDWHILE},
-    {"if", TK_IF},
-    {"then", TK_THEN},
-    {"endif", TK_ENDIF},
-    {"read", TK_READ},
-    {"write", TK_WRITE},
-    {"return", TK_RETURN},
-    {"call", TK_CALL},
-    {"record", TK_RECORD},
-    {"endrecord", TK_ENDRECORD},
-    {"else", TK_ELSE}
-};
-
-typedef struct SymbolPair
-{
+typedef struct SymbolPair {
     char string[30];
     Symbols symbol;
 } SymbolPair;
 
-const NonTerminal NonTerminalProd[57] = {
-    {nt_program, {0}, 1},
-    {nt_mainFunction, {1}, 1},
-    {nt_otherFunctions, {2, 3}, 2},
-    {nt_function, {4}, 1},
-    {nt_input_par, {5}, 1},
-    {nt_output_par, {6, 7}, 2},
-    {nt_parameter_list, {8}, 1},
-    {nt_dataType, {9, 10}, 2},
-    {nt_primitiveDatatype, {11, 12}, 2},
-    {nt_constructedDatatype, {13, 14, 15}, 3},
-    {nt_remaining_list, {16, 17}, 2},
-    {nt_stmts, {18}, 1},
-    {nt_typeDefinitions, {19, 20}, 2},
-    {nt_isRedefined, {21, 22}, 2},
-    {nt_typeDefinition, {23, 24}, 2},
-    {nt_fieldDefinitions, {25}, 1},
-    {nt_fieldDefinition, {26}, 1},
-    {nt_moreFields, {27, 28}, 2},
-    {nt_declarations, {29}, 1},
-    {nt_declaration, {30}, 1},
-    {nt_global_or_not, {31, 32}, 2},
-    {nt_otherstmts, {33, 34}, 2},
-    {nt_stmt, {35, 36, 37, 38, 39}, 5},
-    {nt_assignmentStmt, {40}, 1},
-    {nt_singleOrRecId, {41}, 1},
-    {nt_singleLeft, {42, 43}, 2},
-    {nt_oneExpansion, {44}, 1},
-    {nt_moreExpansions, {45, 46}, 2},
-    {nt_funCallStmt, {47}, 1},
-    {nt_outputParameters, {48, 49}, 2},
-    {nt_inputParameters, {50}, 1},
-    {nt_iterativeStmt, {51}, 1},
-    {nt_conditionalStmt, {52}, 1},
-    {nt_elseStmt, {53, 54}, 2},
-    {nt_ioStmt, {55, 56}, 2},
-    {nt_arithmeticExpression, {57}, 1},
-    {nt_expPrime, {58, 59}, 2},
-    {nt_term, {60}, 1},
-    {nt_termPrime, {61, 62}, 2},
-    {nt_factor, {63, 64}, 2},
-    {nt_highPrecedenceOps, {65, 66}, 2},
-    {nt_lowPrecedenceOps, {67, 68}, 2},
-    {nt_booleanExpression, {69, 70, 71}, 3},
-    {nt_var, {72, 73}, 2},
-    {nt_logicalOp, {74, 75}, 2},
-    {nt_relationalOp, {76, 77, 78, 79, 80, 81}, 6},
-    {nt_returnStmt, {82}, 1},
-    {nt_optionalReturn, {83, 84}, 2},
-    {nt_idList, {85}, 1},
-    {nt_moreIds, {86, 87}, 2},
-    {nt_definetypestmt, {88}, 1},
-    {nt_a, {89, 90}, 2}
-};
+// extern const _NonTerminal NonTerminalProd[57] = {
+//     {nt_program, {0}, 1},
+//     {nt_mainFunction, {1}, 1},
+//     {nt_otherFunctions, {2, 3}, 2},
+//     {nt_function, {4}, 1},
+//     {nt_input_par, {5}, 1},
+//     {nt_output_par, {6, 7}, 2},
+//     {nt_parameter_list, {8}, 1},
+//     {nt_dataType, {9, 10}, 2},
+//     {nt_primitiveDatatype, {11, 12}, 2},
+//     {nt_constructedDatatype, {13, 14, 15}, 3},
+//     {nt_remaining_list, {16, 17}, 2},
+//     {nt_stmts, {18}, 1},
+//     {nt_typeDefinitions, {19, 20}, 2},
+//     {nt_isRedefined, {21, 22}, 2},
+//     {nt_typeDefinition, {23, 24}, 2},
+//     {nt_fieldDefinitions, {25}, 1},
+//     {nt_fieldDefinition, {26}, 1},
+//     {nt_moreFields, {27, 28}, 2},
+//     {nt_declarations, {29}, 1},
+//     {nt_declaration, {30}, 1},
+//     {nt_global_or_not, {31, 32}, 2},
+//     {nt_otherstmts, {33, 34}, 2},
+//     {nt_stmt, {35, 36, 37, 38, 39}, 5},
+//     {nt_assignmentStmt, {40}, 1},
+//     {nt_singleOrRecId, {41}, 1},
+//     {nt_singleLeft, {42, 43}, 2},
+//     {nt_oneExpansion, {44}, 1},
+//     {nt_moreExpansions, {45, 46}, 2},
+//     {nt_funCallStmt, {47}, 1},
+//     {nt_outputParameters, {48, 49}, 2},
+//     {nt_inputParameters, {50}, 1},
+//     {nt_iterativeStmt, {51}, 1},
+//     {nt_conditionalStmt, {52}, 1},
+//     {nt_elseStmt, {53, 54}, 2},
+//     {nt_ioStmt, {55, 56}, 2},
+//     {nt_arithmeticExpression, {57}, 1},
+//     {nt_expPrime, {58, 59}, 2},
+//     {nt_term, {60}, 1},
+//     {nt_termPrime, {61, 62}, 2},
+//     {nt_factor, {63, 64}, 2},
+//     {nt_highPrecedenceOps, {65, 66}, 2},
+//     {nt_lowPrecedenceOps, {67, 68}, 2},
+//     {nt_booleanExpression, {69, 70, 71}, 3},
+//     {nt_var, {72, 73}, 2},
+//     {nt_logicalOp, {74, 75}, 2},
+//     {nt_relationalOp, {76, 77, 78, 79, 80, 81}, 6},
+//     {nt_returnStmt, {82}, 1},
+//     {nt_optionalReturn, {83, 84}, 2},
+//     {nt_idList, {85}, 1},
+//     {nt_moreIds, {86, 87}, 2},
+//     {nt_definetypestmt, {88}, 1},
+//     {nt_a, {89, 90}, 2}
+// };
 
-const SymbolPair StringToSymbols[111] = {
+
+// extern const SymbolPair StringToSymbols[111]
+/* = {
     {"program" , nt_program},
     {"mainFunction" , nt_mainFunction},
     {"otherFunctions" , nt_otherFunctions},
@@ -344,10 +323,11 @@ const SymbolPair StringToSymbols[111] = {
     {"TK_NE", TK_NE},
     {"EPSILON", EPSILON},
 };
+*/
 
-typedef enum boolean {
-    FALSE = 0,
-    TRUE = 1
+typedef enum {
+    FALSE,
+    TRUE
 } boolean;
 
 // extern Token *lexedData[5000];

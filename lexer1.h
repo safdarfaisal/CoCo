@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "helper/definitions.h"
 
 #define MAX_BUFFER_SIZE 1024
 
@@ -84,12 +85,12 @@ typedef struct {
 } Lexer;
 
 Lexer init_lexer(const char* source);
-int is_eof(Lexer *lexer);
-char advance (Lexer *lexer);
-char peek(Lexer *lexer);
-char peek_next(Lexer *lexer);
-void skip_whitespace(Lexer *lexer);
-void skip_comment(Lexer *lexer);
+// int is_eof(Lexer *lexer);
+// char advance (Lexer *lexer);
+// char peek(Lexer *lexer);
+// char peek_next(Lexer *lexer);
+// void skip_whitespace(Lexer *lexer);
+// void skip_comment(Lexer *lexer);
 Token make_token(Lexer *lexer, TokenType type, const char *lexeme);
 TokenType check_keyword(const char *lexeme);
 Token lex(Lexer *lexer);

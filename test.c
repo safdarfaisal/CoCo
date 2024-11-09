@@ -3,7 +3,7 @@
 int main(){
     struct test
     {
-        int x;
+        in t x;
         int y;
     };
 

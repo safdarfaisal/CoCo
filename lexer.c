@@ -1,267 +1,445 @@
+
+#include <ctype.h>
 #include "lexer.h"
 #include "datastructures/buffer.h"
-#include <stdlib.h>
 
-Lexer init_lexer(const char *source) {
-    Lexer lexer;
-    lexer.source = strdup(source);
-    lexer.source_size = strlen(source);
-    lexer.current = 0;
-    lexer.line_no = 1;
-    return lexer;
+extern Token *lexedData[5000];
+static int lexPointer = 0;
+
+void death(const char string[]){
+    perror(string);
+    exit(EXIT_FAILURE);
 }
 
-int is_eof(Lexer *lexer) {
-    return lexer->current >= lexer->source_size;
-}
-
-char advance(Lexer *lexer) {
-    return lexer->source[lexer->current++];
-}
-
-char peek(Lexer *lexer) {
-    return lexer->source[lexer->current];
-}
-
-char peek_next(Lexer *lexer) {
-    if (lexer->current + 1 >= lexer->source_size) return '\0';
-    return lexer->source[lexer->current + 1];
-}
-
-void skip_whitespace(Lexer *lexer) {
-    while (isspace(peek(lexer))) {
-        if (peek(lexer) == '\n') lexer->line_no++;
-        advance(lexer);
-    }
-}
-
-void skip_comment(Lexer *lexer) {
-    while (peek(lexer) != '\n' && !is_eof(lexer)) {
-        advance(lexer);
-    }
-}
-
-Token make_token(Lexer *lexer, TokenType type, const char *lexeme) {
-    Token token;
-    token.type = type;
-    strncpy(token.lexeme, lexeme, 99);
-    token.lexeme[99] = '\0';
-    token.line_no = lexer->line_no;
+Token initToken(){
+    Token token = (Token)malloc(sizeof(struct Token));
+    memset(token, 0, sizeof(struct Token));
     return token;
 }
 
-char *get_str(TokenType type){
-    for (int i = 52; i < 111; i++){
-        if(StringToSymbols[i].symbol == type + 52){
-            return StringToSymbols[i].string;
-        }
-    }
-    return "UNKNOWN";
+void setValue(Token token, char *value, int size){
+    memset(token->value, 0, IDLENGTH*sizeof(char));
+    memcpy(token->value, value, size*sizeof(char));
 }
 
-TokenType check_keyword(const char *lexeme) {
-    if (strcmp(lexeme, "with") == 0) return TK_WITH;
-    if (strcmp(lexeme, "parameters") == 0) return TK_PARAMETERS;
-    if (strcmp(lexeme, "end") == 0) return TK_END;
-    if (strcmp(lexeme, "while") == 0) return TK_WHILE;
-    if (strcmp(lexeme, "union") == 0) return TK_UNION;
-    if (strcmp(lexeme, "endunion") == 0) return TK_ENDUNION;
-    if (strcmp(lexeme, "definetype") == 0) return TK_DEFINETYPE;
-    if (strcmp(lexeme, "as") == 0) return TK_AS;
-    if (strcmp(lexeme, "type") == 0) return TK_TYPE;
-    if (strcmp(lexeme, "_main") == 0) return TK_MAIN;
-    if (strcmp(lexeme, "global") == 0) return TK_GLOBAL;
-    if (strcmp(lexeme, "parameter") == 0) return TK_PARAMETER;
-    if (strcmp(lexeme, "list") == 0) return TK_LIST;
-    if (strcmp(lexeme, "input") == 0) return TK_INPUT;
-    if (strcmp(lexeme, "output") == 0) return TK_OUTPUT;
-    if (strcmp(lexeme, "int") == 0) return TK_INT;
-    if (strcmp(lexeme, "real") == 0) return TK_REAL;
-    if (strcmp(lexeme, "endwhile") == 0) return TK_ENDWHILE;
-    if (strcmp(lexeme, "if") == 0) return TK_IF;
-    if (strcmp(lexeme, "then") == 0) return TK_THEN;
-    if (strcmp(lexeme, "endif") == 0) return TK_ENDIF;
-    if (strcmp(lexeme, "read") == 0) return TK_READ;
-    if (strcmp(lexeme, "write") == 0) return TK_WRITE;
-    if (strcmp(lexeme, "return") == 0) return TK_RETURN;
-    if (strcmp(lexeme, "call") == 0) return TK_CALL;
-    if (strcmp(lexeme, "record") == 0) return TK_RECORD;
-    if (strcmp(lexeme, "endrecord") == 0) return TK_ENDRECORD;
-    if (strcmp(lexeme, "else") == 0) return TK_ELSE;
-    return TK_FIELDID;
+void setLineNum(Token token, int lineno){
+    token->lineno = lineno;
 }
 
-Token lex(Lexer *lexer) {
-    skip_whitespace(lexer);
+void setTerminalType(Token token, Terminal term){
+    token->terminal = term;
+}
 
-    if (is_eof(lexer)) return make_token(lexer, TK_EOF, "EOF");
-
-    char c = advance(lexer);
-
-    if (c == '%') {
-        skip_comment(lexer);
-        skip_whitespace(lexer);
-        if (is_eof(lexer)) return make_token(lexer, TK_EOF, "EOF");
-        c = advance(lexer);
-    }
-
-    // Multi-character tokens and identifiers
-    if (isalpha(c)) {
-        size_t start = lexer->current - 1;
-        while (isalnum(peek(lexer))) advance(lexer);
-        size_t length = lexer->current - start;
-        char *lexeme = strndup(&lexer->source[start], length);
-        TokenType type = check_keyword(lexeme);
-        Token token = make_token(lexer, type, lexeme);
-        free(lexeme);
-        return token;
-    }
-
-    if (c == '_') {
-        size_t start = lexer->current - 1;
-        while (isalnum(peek(lexer)) || isdigit(peek(lexer))) advance(lexer);
-        size_t length = lexer->current - start;
-        char *lexeme = strndup(&lexer->source[start], length);
-        if (strcmp(lexeme, "_main") == 0) {
-            Token token = make_token(lexer, TK_MAIN, lexeme);
-            free(lexeme);
-            return token;
+Terminal getKeywordTerminal(char *string){
+    // lex_keywords is an array of Keyword - enum mappings
+    for(int i = 0; i < 25; i++){
+        if(!strcmp(lex_keywords[i].keyword, string)){
+            return lex_keywords[i].enumVal.t;
         }
-        Token token = make_token(lexer, TK_FUNID, lexeme);
-        free(lexeme);
-        return token;
     }
+    return TK_ERROR;
+}
 
-    if (isdigit(c)) {
-        size_t start = lexer->current - 1;
-        while (isdigit(peek(lexer))) advance(lexer);
-        if (peek(lexer) == '.' && isdigit(peek_next(lexer))) {
-            advance(lexer);
-            while (isdigit(peek(lexer))) advance(lexer);
-            if (peek(lexer) == 'E' && (peek_next(lexer) == '+' || peek_next(lexer) == '-' || isdigit(peek_next(lexer)))) {
-                advance(lexer);
-                if (peek(lexer) == '+' || peek(lexer) == '-') advance(lexer);
-                while (isdigit(peek(lexer))) advance(lexer);
-                size_t length = lexer->current - start;
-                char *lexeme = strndup(&lexer->source[start], length);
-                Token token = make_token(lexer, TK_RNUM, lexeme);
-                free(lexeme);
-                return token;
+Token createToken(char *value, int lineno, Terminal term){
+    Token token = initToken();
+    setValue(token, value, strlen(value));
+    setLineNum(token, lineno);
+    setTerminalType(token, term);
+    return token;
+}
+
+Token createKeywordToken(char *value, int lineno){
+    Terminal term = getKeywordTerminal(value);
+    return createToken(value, lineno, term);
+}
+
+// TODO: Need to be able to detect multiple lexing errors 
+
+int lineno = 0;
+
+// lex one word at a time buffer should be modified automatically.
+Token lex(TwinBuffer fullBuffer){
+    // while might not be needed not here atleast will see TODO
+    while(1){
+        char c = getCharacter(fullBuffer);
+        // store the word to put into token
+        char val[IDLENGTH];
+        memset(val, 0, sizeof(char)*IDLENGTH);
+        int valPointer = 0; // valpointer denotes position of last char 
+                            // of val
+        // Comments are ignored
+        if(c == '%'){
+            while(1){
+                char c = getCharacter(fullBuffer);
+                if(c == '\n'){
+                    lineno++;
+                    return NULL;
+                }
+                if(c == '\0'){
+                    //EOF encountered, create and leave 
+                    return createToken("\0", lineno, TK_EOF);
+                    // exits lex :D
+                }
             }
-            size_t length = lexer->current - start;
-            char *lexeme = strndup(&lexer->source[start], length);
-            Token token = make_token(lexer, TK_RNUM, lexeme);
-            free(lexeme);
-            return token;
         }
-        size_t length = lexer->current - start;
-        char *lexeme = strndup(&lexer->source[start], length);
-        Token token = make_token(lexer, TK_NUM, lexeme);
-        free(lexeme);
-        return token;
-    }
 
-    // Single character tokens
-    switch (c) {
-        case '=': return make_token(lexer, TK_ASSIGNOP, "=");
-        case '(': return make_token(lexer, TK_OP, "(");
-        case ')': return make_token(lexer, TK_CL, ")");
-        case '[': return make_token(lexer, TK_SQL, "[");
-        case ']': return make_token(lexer, TK_SQR, "]");
-        case '+': return make_token(lexer, TK_PLUS, "+");
-        case '-': return make_token(lexer, TK_MINUS, "-");
-        case '*': return make_token(lexer, TK_MUL, "*");
-        case '/': return make_token(lexer, TK_DIV, "/");
-        case ',': return make_token(lexer, TK_COMMA, ",");
-        case ';': return make_token(lexer, TK_SEM, ";");
-        case ':': return make_token(lexer, TK_COLON, ":");
-        case '.': return make_token(lexer, TK_DOT, ".");
-        case '~': return make_token(lexer, TK_NOT, "~");
-        case '<': 
-            if (peek(lexer) == '=') {
-                advance(lexer);
-                return make_token(lexer, TK_LE, "<=");
+        if(isalpha(c)){
+            // get word from source :thumbsup:
+            val[valPointer++] = c;
+            c = getCharacter(fullBuffer);
+            while(isalnum(c)) {
+                val[valPointer++] = c;
+                c = getCharacter(fullBuffer);
             }
-            return make_token(lexer, TK_LT, "<");
-        case '>':
-            if (peek(lexer) == '=') {
-                advance(lexer);
-                return make_token(lexer, TK_GE, ">=");
+            val[valPointer] = '\0';
+            goBackOne(fullBuffer);
+            // check if word is a keyword
+            Terminal keywordTerm = getKeywordTerminal(val);
+            /* if terminal is TK_ERROR, check if it is TK_ID or
+               TK_FIELDID */
+            if(keywordTerm == TK_ERROR){
+                /* 
+                    Will implement diferentiation.
+                    TK_ID implies [b-d][2-7][b-d]*[2-7]*
+                    TK_FIELDID implies [a-z][a-z]*
+                    How do I differentiate?
+                    Walk through the string? 
+                */
+                // first check if it is a TK_ID 
+                int counter = 2;
+                // first 2 characters are bound.
+                if(val[0] >= 'b' && val[0] <= 'd'){
+                    if(val[1] >= '2' && val[1] <= '7'){
+                        int letterMatch = 1;
+                        while(counter < valPointer){
+                            //check [b-d]*
+                            if(letterMatch && !(val[counter] >= 'b' && val[counter] <= 'd')){
+                                letterMatch = 0;
+                            }
+                            // if past [b-d]*, look for [2-7]*
+                            if(!letterMatch && !(val[counter] >= '2' && val[counter] <= '7')){
+                                    break;
+                            }
+                            counter++;
+                        }
+                    }   
+                }
+                if(counter == valPointer){
+                        return createToken(val, lineno, TK_ID);
+                }
+                // Now check if it is TK_FIELDID
+                counter = 1;
+                //first character has to be a-z
+                if(val[0] >= 'a' && val[0] <= 'z'){
+                    while(counter < valPointer){
+                        if(!(val[counter] >= 'a' && val[counter] <= 'z')){
+                            break;
+                        }
+                        counter++;
+                    }
+                }
+                if(counter == valPointer){
+                    return createToken(val, lineno, TK_FIELDID);
+                }
+                // If it isn"t TK_ID or TK_FIELDID, it"s an error 
+                // Go fix it. :D
+                return createToken(val, lineno, TK_ERROR);
+            } else {
+                return createToken(val, lineno, keywordTerm);
             }
-            return make_token(lexer, TK_GT, ">");
-        case '!':
-            if (peek(lexer) == '=') {
-                advance(lexer);
-                return make_token(lexer, TK_NE, "!=");
+        }
+        // if it starts with a "_", it can only be TK_FUNID or TK_MAIN
+        if(c == '_'){
+            // read the keyword.
+            val[valPointer++] = c;
+            c = getCharacter(fullBuffer);
+            while(isalnum(c)){
+                val[valPointer++] = c;
+                c = getCharacter(fullBuffer);
             }
+            val[valPointer] = '\0';
+            goBackOne(fullBuffer);
+            // Now we have two options. 
+            // _main or _[alpha][alpha]*[digit]*
+            // check if _main -> TK_MAIN
+            if(!strcmp(val, "_main")){
+                return createToken(val, lineno, TK_MAIN);
+            }
+            // Not TK_MAIN. check if TK_FUNID
+            int counter = 1;
+            if(isalpha(val[counter])){
+                counter++; // counter = 2 works too :P
+                while(counter < valPointer){
+                    int letterMatch = 1;
+                    // check if not a letter until it occurs once 
+                    if(letterMatch && !isalpha(val[counter])){
+                        letterMatch = 0;    
+                    }
+                    // check if not a digit only once it a letter doesn't occur
+                    if(!letterMatch && !isdigit(val[counter])){
+                        break;
+                    }
+                    counter++;
+                }
+            }
+            if(counter == valPointer){
+                return createToken(val, lineno, TK_FUNID);
+            }
+            // Not following standards is error 
+            // (probably can externalise this)
+            return createToken(val, lineno, TK_ERROR);
+        }
+        // Now we check numbers cuz why not?
+        if(isdigit(c)){
+            // two options TK_RNUM or TK_NUM
+            // TK_NUM [digit][digit]* (not hard)
+            // get string representation of the number
+            val[valPointer++] = c;
+            c = getCharacter(fullBuffer);
+            while(!isspace(c)){
+                val[valPointer++] = c;
+                c = getCharacter(fullBuffer);
+            }
+            goBackOne(fullBuffer);
+            // I need to add an go back since buffer is now at space.
+            // will skip new lines. kinda cringe will fix 
+            // (same for all other ones)
+            // Now, we have the next value (ends at space), Check for 
+            // TK_NUM [digit][digit]* 
+
+            // I know we're kinda double checking. 
+            // If it works it works. :shrugs:
+            int counter = 1;
+            // we know first value is a digit. 4head 
+            while(counter < valPointer){
+                if(!isdigit(val[counter])){
+                    break;
+                }
+                counter++;
+            }
+            if(counter == valPointer){
+                return createToken(val, lineno, TK_NUM);
+            }
+            // Now onto TK_RNUM 
+            //  [digit][digit]*[.][digit][digit][E][+|-|][0-9][0-9]
+            int isTKRNUM = 1;
+            counter = 1;
+            //[digit]*
+            while(counter < valPointer){
+                if(!isdigit(val[counter])){
+                    break;
+                }
+                counter++;
+            }
+            // [.]
+            if(!(val[counter++]=='.')){
+                return createToken(val, lineno, TK_ERROR);
+            }
+            // [digit]
+            if(!isdigit(val[counter++])){
+                return createToken(val, lineno, TK_ERROR);
+            }
+            // [digit]
+            if(!isdigit(val[counter++])){
+                return createToken(val, lineno, TK_ERROR);
+            }
+            // [E]
+            if(!(val[counter++] == 'E')){
+                return createToken(val, lineno, TK_ERROR);
+            }
+            if(!(
+                val[counter] == '+' ||
+                val[counter] == '-' || 
+                isdigit(val[counter])
+            )){
+                return createToken(val, lineno, TK_ERROR);
+            } else if((val[counter] == '+' || val[counter] == '-')){
+                counter++;
+            }
+            // [digit]
+            if(!isdigit(val[counter++])){
+                return createToken(val, lineno, TK_ERROR);
+            }
+            // [digit]
+            if(!isdigit(val[counter++])){
+                return createToken(val, lineno, TK_ERROR);
+            }
+            // I probably should make this so that it cuts off here
+            while(counter < valPointer){
+                val[counter++] = '\0'; // this works?
+            }
+            return createToken(val, lineno, TK_RNUM);
+        }
+        // TK_FIELDID #[a-z][a-z]*
+        if(c == '#'){
+            val[valPointer++] = c;
+            c = getCharacter(fullBuffer);
+            while(!isspace(c)){
+                val[valPointer++] = c;
+                c = getCharacter(fullBuffer);
+            }
+            goBackOne(fullBuffer);
+            if(islower(val[0])){
+                int counter = 1;
+                while(counter < valPointer){
+                    if(!islower(val[counter])){
+                        break;
+                    }
+                    counter++;
+                }
+                if(counter == valPointer){
+                    return createToken(val, lineno, TK_RUID);
+                }
+            }
+            return createToken(val, lineno, TK_ERROR);
+        }
+        // multicharacter fixed tokens
+        Terminal singleTerm;
+        int isSingleMatch = 0; 
+        switch (c){
+            case '(': singleTerm=TK_OP; isSingleMatch = 1; break;
+            case ')': singleTerm=TK_CL; isSingleMatch = 1; break;
+            case '[': singleTerm=TK_SQL; isSingleMatch = 1; break;
+            case ']': singleTerm=TK_SQR; isSingleMatch = 1; break;
+            case '+': singleTerm=TK_PLUS; isSingleMatch = 1; break;
+            case '-': singleTerm=TK_MINUS; isSingleMatch = 1; break;
+            case '*': singleTerm=TK_MUL; isSingleMatch = 1; break;
+            case '/': singleTerm=TK_DIV; isSingleMatch = 1; break;
+            case ',': singleTerm=TK_COMMA; isSingleMatch = 1; break;
+            case ';': singleTerm=TK_SEM; isSingleMatch = 1; break;
+            case ':': singleTerm=TK_COLON; isSingleMatch = 1; break;
+            case '.': singleTerm=TK_DOT; isSingleMatch = 1; break;
+            case '~': singleTerm=TK_NOT; isSingleMatch = 1; break;
+        }
+        if(isSingleMatch){
+            val[0] = c;
+            val[1] = '\0';
+            return createToken(val, lineno, singleTerm);
+        }
+        // Now multicharacter tokens or combinations
+        // <---, &&&, @@@, <, <=, ==. >=, >, !=
+        // first let's do < and derivatives
+        if(c == '<'){
+            char c1 = getCharacter(fullBuffer);
+            // <--- TK_ASSIGNOP
+            if(c1 == '-'){
+                char c2 = getCharacter(fullBuffer);
+                if(c2 == '-'){
+                    char c3 = getCharacter(fullBuffer);
+                    if(c3 == '-'){
+                        return createToken("<---", lineno, TK_ASSIGNOP);
+                    }
+                    goBackOne(fullBuffer);
+                }
+                goBackOne(fullBuffer);
+            }
+            // <= TK_LE
+            if(c1 == '='){
+                return createToken("<=", lineno, TK_LE);
+            }
+            // < TK_LT
+            goBackOne(fullBuffer);
+            return createToken("<", lineno, TK_LT);
+        }
+        // > and its derivatives
+        if(c == '>'){
+            char c1 = getCharacter(fullBuffer);
+            // >= TK_GE
+            if(c1 == '='){
+                return createToken(">=", lineno, TK_GE);
+            }
+            // < TK_GT
+            goBackOne(fullBuffer);
+            return createToken(">", lineno, TK_GT);
+        }
+        // &&&
+        if(c == '&'){
+            char c1 = getCharacter(fullBuffer);
+            if(c1 == '&'){
+                char c2 = getCharacter(fullBuffer);
+                if(c2 == '&'){
+                    return createToken("&&&", lineno, TK_AND);
+                }
+                goBackOne(fullBuffer);
+            }
+            goBackOne(fullBuffer);
+            return createToken("&", lineno, TK_ERROR);
+        }
+        // @@@
+        if(c == '@'){
+            char c1 = getCharacter(fullBuffer);
+            if(c1 == '@'){
+                char c2 = getCharacter(fullBuffer);
+                if(c2 == '@'){
+                    return createToken("@@@", lineno, TK_OR);
+                }
+                goBackOne(fullBuffer);
+            }
+            goBackOne(fullBuffer);
+            return createToken("@", lineno, TK_ERROR);
+        }
+        // == 
+        if(c == '='){
+            char c1 = getCharacter(fullBuffer);
+            if(c1 == '='){
+                return createToken("==", lineno, TK_EQ);
+            }
+            goBackOne(fullBuffer);
+            return createToken("=", lineno, TK_ERROR);
+        }
+        // !=
+        if(c == '!'){
+            char c1 = getCharacter(fullBuffer);
+            if(c1 == '='){
+                return createToken("!=", lineno, TK_NE);
+            }
+            goBackOne(fullBuffer);
+            return createToken("!", lineno, TK_ERROR);
+        }
+        if(c == '\n'){
+            lineno++;
+        }
+        if(c == '\0'){
+            return createToken("\0", lineno, TK_EOF);
+        }
+        if(isspace(c)){
+            return NULL;
+        }
+    }        
+}
+
+
+// we have a lexer that can read words now. I hope :P
+// Now let's read a file.
+void lexFile(char *inpPath, char *opPath){
+    // setup the starting conditions
+    lineno = 1;
+    TwinBuffer fullBuffer = initTwinBuffer();
+    setFilePointer(inpPath, fullBuffer);
+    loadFileIntoBuffer(fullBuffer);
+    FILE *opFile = fopen(opPath, "w+");
+    while(1){
+        Token newToken = lex(fullBuffer);
+        if(!newToken){
+            continue;
+        }
+        // Write into file. one every line works
+        fprintf(opFile,
+            "%s, %d, %d\n",
+             newToken->value, newToken->lineno, newToken->terminal);
+        if(newToken->terminal == TK_EOF){
+            printf("File succesfully lexed\n");
             break;
-        case '#': {
-            size_t start = lexer->current - 1;
-            while (isalnum(peek(lexer))) advance(lexer);
-            size_t length = lexer->current - start;
-            char *lexeme = strndup(&lexer->source[start], length);
-            Token token = make_token(lexer, TK_RUID, lexeme);
-            free(lexeme);
-            return token;
-        }
-        case '&': {
-            if (peek(lexer) == '&' && peek_next(lexer) == '&') {
-                advance(lexer);
-                advance(lexer);
-                return make_token(lexer, TK_AND, "&&&");
-            }
-            break;
-        }
-        case '@': {
-            if (peek(lexer) == '@' && peek_next(lexer) == '@') {
-                advance(lexer);
-                advance(lexer);
-                return make_token(lexer, TK_OR, "@@@");
-            }
-            break;
         }
     }
-
-    // If no valid token is found, return an error token
-    return make_token(lexer, TK_ERROR, "ERROR");
+    fclose(opFile);          
 }
 
-void write_into_lexed(char *inp_file){
-    // What do I need to do? What do I have?
-    // I have the ability to generate tokens (lex)
-    // I can print the tokens as string once I get them.
-    // I need to read the file, with buffer size capped
-    char *out_file = strcat(inp_file,".lexed");
-    FILE *op_fp = fopen(out_file, "w+");
-    TwinBuffer *buffer = initTwinBuffer();
-    setFilePointer(buffer, inp_file);
-    
-    boolean fullRead = FALSE;
-    while(!fullRead){
-        
-    }
+// Now we have a lexer for the whole file.. :thumbsup:
+
+int main(int argc, char const *argv[])
+{   
+    lexFile("help.pls", "tokens.tkn");
+    return 0;
+
 }
-
-// void test(){
-//     Token token;
-//     do {
-//         token = lex(&lexer);
-//         printf("Token: %s, Lexeme: %s, Line: %d\n", 
-//             (token.type == TK_ASSIGNOP) ? "TK_ASSIGNOP" :
-//             (token.type == TK_NUM) ? "TK_NUM" :
-//             (token.type == TK_FIELDID) ? "TK_FIELDID" :
-//             (token.type == TK_FUNID) ? "TK_FUNID" :
-//             (token.type == TK_OP) ? "TK_OP" :
-//             (token.type == TK_CL) ? "TK_CL" :
-//             (token.type == TK_PLUS) ? "TK_PLUS" :
-//             (token.type == TK_SEM) ? "TK_SEM" :
-//             (token.type == TK_MAIN) ? "TK_MAIN" :
-//             (token.type == TK_ERROR) ? "TK_ERROR" :
-//             (token.type == TK_EOF) ? "TK_EOF" : "UNKNOWN",
-//             token.lexeme, token.line_no);
-//     } while (token.type != TK_EOF);
-
-//     free(lexer.source);
-//     free(source_code);
-//     return 0;
-// }

@@ -31,7 +31,7 @@ void advanceToken() {
     }
 }
 
-ParseTreeNode* match(Symbols expected) {
+ParseTreeNode* match(Terminal expected) {
     Token currentToken = getCurrentToken();
     if (currentToken.type == expected) {
         ParseTreeNode* node = createNode(currentToken.type, currentToken.lexeme);

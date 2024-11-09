@@ -1,4 +1,6 @@
 #include "lexer1.h"
+#include "datastructures/buffer.h"
+#include <stdlib.h>
 
 Lexer init_lexer(const char *source) {
     Lexer lexer;
@@ -48,6 +50,7 @@ Token make_token(Lexer *lexer, TokenType type, const char *lexeme) {
     return token;
 }
 
+
 TokenType check_keyword(const char *lexeme) {
     if (strcmp(lexeme, "with") == 0) return TK_WITH;
     if (strcmp(lexeme, "parameters") == 0) return TK_PARAMETERS;
@@ -77,7 +80,7 @@ TokenType check_keyword(const char *lexeme) {
     if (strcmp(lexeme, "record") == 0) return TK_RECORD;
     if (strcmp(lexeme, "endrecord") == 0) return TK_ENDRECORD;
     if (strcmp(lexeme, "else") == 0) return TK_ELSE;
-    return TK_FIELDID;
+    return TK_ERROR;
 }
 
 Token lex(Lexer *lexer) {
@@ -215,30 +218,21 @@ Token lex(Lexer *lexer) {
     return make_token(lexer, TK_ERROR, "ERROR");
 }
 
-char *read_file(const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        fprintf(stderr, "Could not open file %s\n", filename);
-        exit(EXIT_FAILURE);
+void write_into_lexed(char *inp_file){
+    // What do I need to do? What do I have?
+    // I have the ability to generate tokens (lex)
+    // I can print the tokens as string once I get them.
+    // I need to read the file, with buffer size capped
+    char *out_file = strcat(inp_file,".lexed");
+    FILE *op_fp = fopen(out_file, "w+");
+    TwinBuffer *buffer = initTwinBuffer();
+    setFilePointer(buffer, inp_file);
+    
+    boolean fullRead = FALSE;
+    while(!fullRead){
+        
     }
-
-    fseek(file, 0, SEEK_END);
-    long length = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    char *buffer = (char *)malloc(length + 1);
-    if (!buffer) {
-        fprintf(stderr, "Could not allocate memory for reading file\n");
-        exit(EXIT_FAILURE);
-    }
-
-    fread(buffer, 1, length, file);
-    buffer[length] = '\0';
-
-    fclose(file);
-    return buffer;
 }
-
 
 // void test(){
 //     Token token;

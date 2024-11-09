@@ -10,28 +10,16 @@
 #define MAXPRODLEN 8
 #define MAXPRODCOUNT 100
 
-// Token structure
-typedef struct Token {
-    Symbols type;
-    char lexeme[100];
-} Token;
-
 // Parse tree node structure
 typedef struct ParseTreeNode {
+    boolean isTerminal;
     Symbols symbol;
     char lexeme[100];
     struct ParseTreeNode **children;
     int childCount;
 } ParseTreeNode;
 
-
-Token *tokens;
-int currentTokenIndex = 0;
-int tokenCount;
-
-ParseTreeNode *createNode(Symbols symbol, const char *lexeme);
-void addChild(ParseTreeNode *parent, ParseTreeNode *child);
-
+ 
 // Forward declarations
 ParseTreeNode* program();
 ParseTreeNode* mainFunction();
