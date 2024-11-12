@@ -1,0 +1,42 @@
+{
+    "node": "ArithExpr",
+    "child": [
+        {
+            "node": "Term",
+            "child": [
+                {
+                    "node": "singleOrRecId",
+                    "child": [
+                        {
+                            "node": "b",
+                            "child": null
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "node": "ExpPrime",
+            "child": [
+                {
+                    "node": "TK_PLUS",
+                    "child": null
+                },
+                {
+                    "node": "Term",
+                    "child": [
+                        {
+                            "node": "singleOrRecId",
+                            "child": [
+                                {
+                                    "node": "c",
+                                    "child": null
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
