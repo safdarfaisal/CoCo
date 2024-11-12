@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "helper/definitions.h"
 
-// There is a line number discrepancy (not sure from where)
+//TODO: ## There is a line number discrepancy (not sure from where) ##
 
 const KeywordPair lex_keywords[27] = {
     {.keyword = "with", .enumVal= {.t = TK_WITH }},
@@ -37,5 +37,7 @@ const KeywordPair lex_keywords[27] = {
     {.keyword =  "endrecord", .enumVal= {.t = TK_ENDRECORD }},
     {.keyword =  "else", .enumVal= {.t = TK_ELSE }}
 };
+
+// Token createToken(char *value, int lineno, Terminal term);
 
 #endif

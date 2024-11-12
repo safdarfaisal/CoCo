@@ -10,6 +10,7 @@
 #define IDLENGTH 30
 #define MAXUNIQUE 8
 
+typedef struct Token *Token;
 
 typedef enum {
     nt_program,
@@ -129,23 +130,24 @@ typedef enum {
     TK_EOF
 } Terminal;
 
+
+// Using union makes this a lot easier to think about
 typedef union {
     NonTerminal nt;
     Terminal t;
 } Symbols;
 
+struct Token{ 
+    Terminal terminal;
+    char value[IDLENGTH];
+    int lineno;
+};
 
 typedef struct KeywordPair{
     char keyword[IDLENGTH];
     Symbols enumVal;
-
 } KeywordPair; 
 
-// typedef struct _NonTerminal {
-//     NonTerminals _NonTerminal;
-//     int nextProductions[MAXUNIQUE];
-//     int numOfNextProductions;
-// } _NonTerminal;
 
 
 typedef struct SymbolPair {
@@ -153,6 +155,8 @@ typedef struct SymbolPair {
     Symbols symbol;
 } SymbolPair;
 
+
+// Not using this as of now, meant for table parsing
 // extern const _NonTerminal NonTerminalProd[57] = {
 //     {nt_program, {0}, 1},
 //     {nt_mainFunction, {1}, 1},
@@ -330,6 +334,6 @@ typedef enum {
     TRUE
 } boolean;
 
-// extern Token *lexedData[5000];
+
 
 #endif

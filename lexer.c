@@ -3,7 +3,7 @@
 #include "lexer.h"
 #include "datastructures/buffer.h"
 
-extern Token *lexedData[5000];
+extern Token lexedData[5000];
 static int lexPointer = 0;
 
 void death(const char string[]){
@@ -196,7 +196,7 @@ Token lex(TwinBuffer fullBuffer){
             // get string representation of the number
             val[valPointer++] = c;
             c = getCharacter(fullBuffer);
-            while(!isspace(c)){
+            while(isdigit(c)){
                 val[valPointer++] = c;
                 c = getCharacter(fullBuffer);
             }
@@ -400,7 +400,7 @@ Token lex(TwinBuffer fullBuffer){
             lineno++;
         }
         if(c == '\0'){
-            return createToken("\0", lineno, TK_EOF);
+            return createToken("$", lineno, TK_EOF);
         }
         if(isspace(c)){
             return NULL;
@@ -439,7 +439,6 @@ void lexFile(char *inpPath, char *opPath){
 
 int main(int argc, char const *argv[])
 {   
-    lexFile("help.pls", "tokens.tkn");
+    lexFile("./help.pls", "tokens1.tkn");
     return 0;
-
 }
