@@ -602,7 +602,8 @@ AstTreeNode* otherstmts(AstTreeNode *node) {
         getCurrentToken()->terminal == TK_WRITE || getCurrentToken()->terminal == TK_CALL) {
 
         stmt(node);
-        addChild(node, otherstmts(node));
+    
+        otherstmts(node);
     } else {
         return NULL;
     }
@@ -1104,7 +1105,7 @@ int main(){
             currentToken->value, currentToken->lineno, currentToken->terminal);
     }
     parseTree = program();
-    printParseTree(parseTree, 1);
+    printParseTree(parseTree, 0);
     printf("Parsing completed succesfully\n");
     return 0;
 }
