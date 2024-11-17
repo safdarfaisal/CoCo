@@ -1096,8 +1096,8 @@ void printParseTree(AstTreeNode* node, int level) {
     }
 }
 
-int main(){
-    loadTokensFromFile("tokens1.tkn");
+AstTreeNode *getASTfromFile(char *tokenfile){
+    loadTokensFromFile(tokenfile);
     printf("length = %d\n", listSize);
     for(int i = 0; i < listSize; i++){
         Token currentToken = lexedTokens[i];
@@ -1107,7 +1107,7 @@ int main(){
     parseTree = program();
     printParseTree(parseTree, 0);
     printf("Parsing completed succesfully\n");
-    return 0;
+    return parseTree;
 }
 
 

@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h" // Assuming parser.h includes necessary definitions
+#include "helper/definitions.h"
+
+// Create 3 symbol tables, one for functions, one for symbols, one for 
+// records/unions
 
 // Define a simple enum for type information
 typedef enum {
@@ -13,28 +17,53 @@ typedef enum {
 // Symbol table entry structure
 typedef struct SymbolTableEntry {
     char name[100];
-    Symbols type;
+    char fnRef[100];
     DataType dataType;
     int scope;
+    int size;
     struct SymbolTableEntry* next;
 } SymbolTableEntry;
 
+typedef struct Field {
+    char fieldId[30];
+    DataType fieldType;
+} Field;
+
+typedef struct RecordTableEntry {
+    char recordID[100];
+    Field **fields;
+    int fieldCount;
+} RecordTableEntry;
+
+typedef union TableEntry{
+    SymbolTableEntry st;
+    RecordTableEntry rt;
+} TableEntry;
+
 // Symbol table structure (using chaining for collision resolution)
-typedef struct SymbolTable {
-    SymbolTableEntry** table;
+typedef struct Table {
+    int isSymbolTable;
+    TableEntry** table;
     int size;
-} SymbolTable;
+} Table;
 
 // Function to create a new symbol table entry
-SymbolTableEntry* createSymbolTableEntry(const char* name, Symbols type, DataType dataType, int scope) {
+SymbolTableEntry* createSymbolTableEntry(const char* name, char *fnRef, DataType dataType, int scope) {
     SymbolTableEntry* entry = (SymbolTableEntry*)malloc(sizeof(SymbolTableEntry));
     strcpy(entry->name, name);
-    entry->type = type;
-    entry->dataType = dataType;
-    entry->scope = scope;
-    entry->next = NULL;
+    entry->scope = scope; // 1 if function par, else 0 
+    if(scope)
+        strcpy(entry->fnRef,fnRef); // g
+    entry->dataType = dataType; // typing for symbol, is it int
+    entry->size = 4; // size in bytes (currently same for int and real)
+    entry->next = NULL; // for chaining (linked list)
     return entry;
 }
+
+RecordTableEntry *createRecordTableEntry(char *recordID){
+
+}
+
 
 // Function to create a symbol table
 SymbolTable* createSymbolTable(int size) {
@@ -95,6 +124,7 @@ void printSymbolTable(SymbolTable* symTable) {
 int currentScope = 0;
 SymbolTable* symTable;
 
+
 // Function to determine the data type of a node
 DataType getDataType(ParseTreeNode* node) {
     if (node->symbol == TK_INT) return TYPE_INT;
@@ -117,50 +147,52 @@ void semanticAnalysis(ParseTreeNode* node) {
     if (!node) return;
 
     // Handle different types of nodes
-    switch (node->symbol) {
-        case nt_declaration: {
-            // Check if the variable is already declared in the current scope
-            ParseTreeNode* idNode = node->children[1];
-            DataType dataType = getDataType(node->children[0]);
-            if (lookupSymbol(symTable, idNode->lexeme)) {
-                printf("Semantic error: Variable '%s' is already declared.\n", idNode->lexeme);
-                exit(1);
-            }
-            // Insert the variable into the symbol table
-            insertSymbol(symTable, idNode->lexeme, idNode->symbol, dataType, currentScope);
-            break;
-        }
-        case nt_assignmentStmt: {
-            // Check if the variable is declared before assignment
-            ParseTreeNode* idNode = node->children[0]->children[0]; // Assuming singleOrRecId -> ID
-            SymbolTableEntry* entry = lookupSymbol(symTable, idNode->lexeme);
-            if (!entry) {
-                printf("Semantic error: Variable '%s' is not declared.\n", idNode->lexeme);
-                exit(1);
-            }
-            // Check if the assigned expression is compatible with the variable's type
-            DataType exprType = getDataType(node->children[2]);
-            if (!areTypesCompatible(entry->dataType, exprType)) {
-                printf("Type error: Incompatible types for variable '%s'.\n", idNode->lexeme);
-                exit(1);
-            }
-            break;
-        }
-        case nt_arithmeticExpression: {
-            // Check type consistency in arithmetic expressions
-            DataType leftType = getDataType(node->children[0]);
-            DataType rightType = getDataType(node->children[1]);
-            if (!areTypesCompatible(leftType, rightType)) {
-                printf("Type error: Incompatible types in arithmetic expression.\n");
-                exit(1);
-            }
-            break;
-        }
-        // Add more cases for other semantic checks and type checks as needed
-        default:
-            break;
-    }
+    if(!node->isTerminal){
+        switch (node->symbol.nt) {
+            case nt_declarations: {
 
+                // Check if the variable is already declared in the current scope
+                // ParseTreeNode* idNode = node->children[1];
+                // DataType dataType = getDataType(node->children[0]);
+                // if (lookupSymbol(symTable, idNode->lexeme)) {
+                //     printf("Semantic error: Variable '%s' is already declared.\n", idNode->lexeme);
+                //     exit(1);
+                // }
+                // // Insert the variable into the symbol table
+                // insertSymbol(symTable, idNode->lexeme, idNode->symbol, dataType, currentScope);
+                // break;
+            }
+            case nt_assignmentStmt: {
+                // Check if the variable is declared before assignment
+                ParseTreeNode* idNode = node->children[0]->children[0]; // Assuming singleOrRecId -> ID
+                SymbolTableEntry* entry = lookupSymbol(symTable, idNode->lexeme);
+                if (!entry) {
+                    printf("Semantic error: Variable '%s' is not declared.\n", idNode->lexeme);
+                    exit(1);
+                }
+                // Check if the assigned expression is compatible with the variable's type
+                DataType exprType = getDataType(node->children[2]);
+                if (!areTypesCompatible(entry->dataType, exprType)) {
+                    printf("Type error: Incompatible types for variable '%s'.\n", idNode->lexeme);
+                    exit(1);
+                }
+                break;
+            }
+            case nt_arithmeticExpression: {
+                // Check type consistency in arithmetic expressions
+                DataType leftType = getDataType(node->children[0]);
+                DataType rightType = getDataType(node->children[1]);
+                if (!areTypesCompatible(leftType, rightType)) {
+                    printf("Type error: Incompatible types in arithmetic expression.\n");
+                    exit(1);
+                }
+                break;
+            }
+            // Add more cases for other semantic checks and type checks as needed
+            default:
+                break;
+        }
+    }
     // Recursively analyze children
     for (int i = 0; i < node->childCount; i++) {
         semanticAnalysis(node->children[i]);
