@@ -36,8 +36,8 @@ typedef struct RecordTableEntry {
 } RecordTableEntry;
 
 typedef union TableEntry{
-    SymbolTableEntry *st;
-    RecordTableEntry *rt;
+    SymbolTableEntry st;
+    RecordTableEntry rt;
 } TableEntry;
 
 // Symbol table structure (using chaining for collision resolution)
@@ -89,14 +89,15 @@ unsigned int hash(const char* str, int size) {
 }
 
 // Function to insert a symbol into the symbol table
-void insertEntry(Table* symTable, TableEntry entry) {
+void insertEntry(Table* symTable, TableEntry *entry) {
     if(symTable->isSymbolTable){
         // Inserting to symbol table, no checking to ensure symtable entry for now
-        SymbolTableEntry *symEntry = entry.st;
-        unsigned int index = hash(symEntry->name, symTable->size);
-        
+        SymbolTableEntry symEntry = (*entry).st;
+        unsigned int index = hash(entry->st.name, symTable->size);
+        entry->st.next = (symTable->table[index]);
+        symTable->table[index] = entry; 
     }
-    if(entry.rt)
+    if(entry->rt.)
     unsigned int index = hash(name, symTable->size);
     SymbolTableEntry* entry = createSymbolTableEntry(name, type, dataType, scope);
     entry->next = symTable->table[index];
@@ -158,7 +159,7 @@ int areTypesCompatible(DataType type1, DataType type2) {
 void semanticAnalysis(AstTreeNode* node, char* fnRef) {
     if (!node) return;
     int scope = 0;
-    if (!fnRef){
+    if (fnRef){
         scope = 1;
     }
     // Handle different types of nodes (I don't handle function as of now)
