@@ -33,19 +33,19 @@ typedef struct RecordTableEntry {
     char recordID[100];
     Field **fields;
     int fieldCount;
+    struct RecordTableEntry *next;
 } RecordTableEntry;
 
-typedef union TableEntry{
-    SymbolTableEntry st;
-    RecordTableEntry rt;
-} TableEntry;
-
 // Symbol table structure (using chaining for collision resolution)
-typedef struct Table {
-    int isSymbolTable;
-    TableEntry** table;
+typedef struct SymbolTable {
+    SymbolTableEntry** table;
     int size;
-} Table;
+} SymbolTable;
+
+typedef struct RecordTable {
+    RecordTableEntry** table;
+    int size;
+} RecordTable;
 
 // Function to create a new symbol table entry
 SymbolTableEntry* createSymbolTableEntry(char* name, char *fnRef, DataType dataType, int scope) {
@@ -69,8 +69,8 @@ RecordTableEntry *initRecordTableEntry(char *recordID){
 
 
 // Function to create a symbol table
-Table* createSymbolTable(int size, int isSymbolTable) {
-    Table* symTable = (Table*)malloc(sizeof(Table));
+SymbolTable* createSymbolTable(int size, int isSymbolTable) {
+    SymbolTable* symTable = (SymbolTable*)malloc(sizeof(SymbolTable));
     symTable->table = (SymbolTableEntry**)malloc(size * sizeof(SymbolTableEntry*));
     for (int i = 0; i < size; i++) {
         symTable->table[i] = NULL;
@@ -89,19 +89,15 @@ unsigned int hash(const char* str, int size) {
 }
 
 // Function to insert a symbol into the symbol table
-void insertEntry(Table* symTable, TableEntry *entry) {
-    if(symTable->isSymbolTable){
-        // Inserting to symbol table, no checking to ensure symtable entry for now
-        SymbolTableEntry symEntry = (*entry).st;
-        unsigned int index = hash(entry->st.name, symTable->size);
-        entry->st.next = (symTable->table[index]);
-        symTable->table[index] = entry; 
-    }
-    if(entry->rt.)
-    unsigned int index = hash(name, symTable->size);
-    SymbolTableEntry* entry = createSymbolTableEntry(name, type, dataType, scope);
-    entry->next = symTable->table[index];
-    symTable->table[index] = entry;
+void insertSymbolTableEntry(SymbolTable* table, SymbolTableEntry *entry) {
+    unsigned int index = hash(entry->name, table->size);
+    entry->next = table->table[index];
+    table->table[index] = entry;
+}
+void insertRecordTableEntry(RecordTable *table, RecordTableEntry *entry){
+    unsigned int index = hash(entry->recordID, table->size);
+    entry->next = table->table[index];
+    table->table[index] = entry;
 }
 
 // Function to lookup a symbol in the symbol table
@@ -156,7 +152,7 @@ int areTypesCompatible(DataType type1, DataType type2) {
 }
 
 // Function to traverse the parse tree and perform semantic analysis and type checking
-void semanticAnalysis(AstTreeNode* node, char* fnRef) {
+void semanticAnalysis(Table *symbolTable, Table *recordTable, AstTreeNode* node, char* fnRef) {
     if (!node) return;
     int scope = 0;
     if (fnRef){
@@ -177,7 +173,7 @@ void semanticAnalysis(AstTreeNode* node, char* fnRef) {
                         // primitive datatype, can be added directly
                         SymbolTableEntry *entry = createSymbolTableEntry(name, fnRef, type, scope);
                         // insert the entry into the symbol table
-
+                        insertEntry(symbolTable, entry);
                     }
                 }
                 // Check if the variable is already declared in the current scope
