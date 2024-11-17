@@ -36,8 +36,8 @@ typedef struct RecordTableEntry {
 } RecordTableEntry;
 
 typedef union TableEntry{
-    SymbolTableEntry st;
-    RecordTableEntry rt;
+    SymbolTableEntry *st;
+    RecordTableEntry *rt;
 } TableEntry;
 
 // Symbol table structure (using chaining for collision resolution)
@@ -89,7 +89,14 @@ unsigned int hash(const char* str, int size) {
 }
 
 // Function to insert a symbol into the symbol table
-void insertSymbol(Table* symTable, const char* name, Symbols type, DataType dataType, int scope) {
+void insertEntry(Table* symTable, TableEntry entry) {
+    if(symTable->isSymbolTable){
+        // Inserting to symbol table, no checking to ensure symtable entry for now
+        SymbolTableEntry *symEntry = entry.st;
+        unsigned int index = hash(symEntry->name, symTable->size);
+        
+    }
+    if(entry.rt)
     unsigned int index = hash(name, symTable->size);
     SymbolTableEntry* entry = createSymbolTableEntry(name, type, dataType, scope);
     entry->next = symTable->table[index];
@@ -168,10 +175,9 @@ void semanticAnalysis(AstTreeNode* node, char* fnRef) {
                     if(type != TYPE_CONSTRUCTED){
                         // primitive datatype, can be added directly
                         SymbolTableEntry *entry = createSymbolTableEntry(name, fnRef, type, scope);
-                        
+                        // insert the entry into the symbol table
 
                     }
-
                 }
                 // Check if the variable is already declared in the current scope
                 // ParseTreeNode* idNode = node->children[1];
