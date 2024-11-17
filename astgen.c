@@ -227,7 +227,7 @@ void loadTokensFromFile(char *filePath){
         //read row
         printf("%s", row);
         // tokenize row with , as delimiter
-        char delimiter[] = ",";
+        char delimiter[] = "~";
         // char *val = strtok(row, delimiter);
         // if(val){}
         char *tokenValue = strtok(row, delimiter);
@@ -287,7 +287,7 @@ AstTreeNode* match(Terminal expected, boolean necessary) {
         // advanceToken();
         return node;
     } else {
-        printf("Syntax error: Expected %d but found %d\n", expected, currentToken->terminal);
+        printf("Syntax error: Expected %d but found %d\n at line no: %d", expected, currentToken->terminal, currentToken->lineno);
         exit(1);
     }
 }
@@ -488,21 +488,21 @@ AstTreeNode* isRedefined() {
 AstTreeNode* typeDefinition() {
     Symbols symbol;
     symbol.nt = nt_typeDefinition;
-    AstTreeNode *node = createNode(symbol, "typeDefinition", 0);
-
+    AstTreeNode *node = NULL;
     if (getCurrentToken()->terminal == TK_RECORD) {
+        node = createNode(symbol, "typeDefinition", 0);
         addChild(node, match(TK_RECORD, TRUE));
         addChild(node, match(TK_RUID, TRUE));
         addChild(node, fieldDefinitions());
         match_f(TK_ENDRECORD);
+        match_f(TK_SEM);
     } else if (getCurrentToken()->terminal == TK_UNION) {
+        node = createNode(symbol, "typeDefinition", 0);
         addChild(node, match(TK_UNION, TRUE));
         addChild(node, match(TK_RUID, TRUE));
         addChild(node, fieldDefinitions());
         match_f(TK_ENDUNION);
-    } else {
-        printf("Syntax error in typeDefinition\n");
-        exit(1);
+        match_f(TK_SEM);
     }
     return node;
 }
@@ -599,7 +599,8 @@ AstTreeNode* otherstmts(AstTreeNode *node) {
 
     if (getCurrentToken()->terminal == TK_ID || getCurrentToken()->terminal == TK_WHILE ||
         getCurrentToken()->terminal == TK_IF || getCurrentToken()->terminal == TK_READ ||
-        getCurrentToken()->terminal == TK_WRITE || getCurrentToken()->terminal == TK_CALL) {
+        getCurrentToken()->terminal == TK_WRITE || getCurrentToken()->terminal == TK_CALL ||
+        getCurrentToken()->terminal == TK_SQL) {
 
         stmt(node);
     
@@ -624,7 +625,7 @@ AstTreeNode* stmt(AstTreeNode *node) {
         addChild(node, conditionalStmt());
     } else if (getCurrentToken()->terminal == TK_READ || getCurrentToken()->terminal == TK_WRITE) {
         addChild(node, ioStmt());
-    } else if (getCurrentToken()->terminal == TK_CALL) {
+    } else if (getCurrentToken()->terminal == TK_CALL || getCurrentToken()->terminal == TK_SQL) {
         addChild(node, funCallStmt());
     } else {
         printf("Syntax error in stmt\n");
@@ -658,9 +659,7 @@ AstTreeNode* singleLeft(AstTreeNode *node) {
     Symbols symbol;
     symbol.nt = nt_singleLeft;
     AstTreeNode *singleLeftNode = createNode(symbol, "singleLeft", 0);
-
     if (getCurrentToken()->terminal == TK_DOT) {
-        match_f(TK_DOT);
         AstTreeNode *fieldNode = oneExpansion(node);
         moreExpansions(fieldNode);
     } else {
@@ -1039,7 +1038,7 @@ AstTreeNode* idList(AstTreeNode *node) {
     }
 
     addChild(node, match(TK_ID, TRUE));
-    addChild(node, moreIds(node));
+    moreIds(node);
     return node;
 }
 
@@ -1050,7 +1049,7 @@ AstTreeNode* moreIds(AstTreeNode *node) {
 
     if (getCurrentToken()->terminal == TK_COMMA) {
         match_f(TK_COMMA);
-        addChild(node, idList(node));
+        idList(node);
         return node;
     } else {
         return NULL;
@@ -1096,8 +1095,22 @@ void printParseTree(AstTreeNode* node, int level) {
     }
 }
 
-AstTreeNode *getASTfromFile(char *tokenfile){
-    loadTokensFromFile(tokenfile);
+// AstTreeNode *getASTfromFile(char *tokenfile){
+//     loadTokensFromFile(tokenfile);
+//     printf("length = %d\n", listSize);
+//     for(int i = 0; i < listSize; i++){
+//         Token currentToken = lexedTokens[i];
+//         printf("Value: %s, line no: %d, terminal_enum: %d\n", 
+//             currentToken->value, currentToken->lineno, currentToken->terminal);
+//     }
+//     parseTree = program();
+//     printParseTree(parseTree, 0);
+//     printf("Parsing completed succesfully\n");
+//     return parseTree;
+// }
+
+int main(){
+    loadTokensFromFile("tokens1.tkn");
     printf("length = %d\n", listSize);
     for(int i = 0; i < listSize; i++){
         Token currentToken = lexedTokens[i];
@@ -1107,7 +1120,7 @@ AstTreeNode *getASTfromFile(char *tokenfile){
     parseTree = program();
     printParseTree(parseTree, 0);
     printf("Parsing completed succesfully\n");
-    return parseTree;
+    return 0;
 }
 
 

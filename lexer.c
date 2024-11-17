@@ -32,7 +32,7 @@ void setTerminalType(Token token, Terminal term){
 
 Terminal getKeywordTerminal(char *string){
     // lex_keywords is an array of Keyword - enum mappings
-    for(int i = 0; i < 25; i++){
+    for(int i = 0; i < 27; i++){
         if(!strcmp(lex_keywords[i].keyword, string)){
             return lex_keywords[i].enumVal.t;
         }
@@ -279,7 +279,8 @@ Token lex(TwinBuffer fullBuffer){
                 c = getCharacter(fullBuffer);
             }
             goBackOne(fullBuffer);
-            if(islower(val[0])){
+            if(islower(val[1])){
+                printf("%c\n",c);
                 int counter = 1;
                 while(counter < valPointer){
                     if(!islower(val[counter])){
@@ -425,7 +426,7 @@ void lexFile(char *inpPath, char *opPath){
         }
         // Write into file. one every line works
         fprintf(opFile,
-            "%s, %d, %d\n",
+            "%s~%d~%d~\n",
              newToken->value, newToken->lineno, newToken->terminal);
         if(newToken->terminal == TK_EOF){
             printf("File succesfully lexed\n");

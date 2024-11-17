@@ -89,7 +89,7 @@ void loadTokensFromFile(char *filePath){
         //read row
         printf("%s", row);
         // tokenize row with , as delimiter
-        char delimiter[] = ",";
+        char delimiter[] = "~";
         // char *val = strtok(row, delimiter);
         // if(val){}
         char *tokenValue = strtok(row, delimiter);
@@ -336,16 +336,15 @@ ParseTreeNode* typeDefinition() {
         addChild(node, match(TK_RUID));
         addChild(node, fieldDefinitions());
         addChild(node, match(TK_ENDRECORD));
+        addChild(node, match(TK_SEM));
     } else if (getCurrentToken()->terminal == TK_UNION) {
         addChild(node, match(TK_UNION));
         addChild(node, match(TK_RUID));
         addChild(node, fieldDefinitions());
         addChild(node, match(TK_ENDUNION));
-    } else {
-        printf("Syntax error in typeDefinition\n");
-        exit(1);
+        addChild(node, match(TK_SEM));
     }
-    return node;
+    return NULL;
 }
 
 ParseTreeNode* fieldDefinitions() {
@@ -419,7 +418,7 @@ ParseTreeNode* otherstmts() {
     Symbols symbolVal;
     symbolVal.nt = nt_otherstmts;
     ParseTreeNode *node = createNode(symbolVal, "otherstmts", 0);
-    if (getCurrentToken()->terminal == TK_ID || getCurrentToken()->terminal == TK_WHILE || getCurrentToken()->terminal == TK_IF || getCurrentToken()->terminal == TK_READ || getCurrentToken()->terminal == TK_WRITE || getCurrentToken()->terminal == TK_CALL) {
+    if (getCurrentToken()->terminal == TK_ID || getCurrentToken()->terminal == TK_WHILE || getCurrentToken()->terminal == TK_IF || getCurrentToken()->terminal == TK_READ || getCurrentToken()->terminal == TK_WRITE || getCurrentToken()->terminal == TK_CALL ||getCurrentToken()->terminal == TK_SQL) {
         addChild(node, stmt());
         addChild(node, otherstmts());
     }
@@ -438,7 +437,7 @@ ParseTreeNode* stmt() {
         addChild(node, conditionalStmt());
     } else if (getCurrentToken()->terminal == TK_READ || getCurrentToken()->terminal == TK_WRITE) {
         addChild(node, ioStmt());
-    } else if (getCurrentToken()->terminal == TK_CALL) {
+    } else if (getCurrentToken()->terminal == TK_SQL || getCurrentToken()->terminal == TK_CALL) {
         addChild(node, funCallStmt());
     } else {
         printf("Syntax error in stmt\n");
@@ -471,8 +470,7 @@ ParseTreeNode* singleLeft() {
     Symbols symbolVal;
     symbolVal.nt = nt_singleLeft;
     ParseTreeNode *node = createNode(symbolVal, "singleLeft", 0);
-    if (getCurrentToken()->terminal == TK_ID) {
-        addChild(node, match(TK_ID));
+    if (getCurrentToken()->terminal == TK_DOT) {
         addChild(node, oneExpansion());
         addChild(node, moreExpansions());
     }
