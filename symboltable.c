@@ -11,8 +11,11 @@
 typedef enum {
     TYPE_INT,
     TYPE_REAL,
-    TYPE_CONSTRUCTED
+    TYPE_RECORD,
+    TYPE_UNION
 } DataType;
+
+
 
 // Symbol table entry structure
 typedef struct SymbolTableEntry {
@@ -27,9 +30,12 @@ typedef struct SymbolTableEntry {
 typedef struct Field {
     char fieldId[30];
     DataType fieldType;
+    char consName[30];
+    struct Field *next;
 } Field;
 
 typedef struct RecordTableEntry {
+    int isUnion;
     char recordID[100];
     Field **fields;
     int fieldCount;
@@ -60,10 +66,12 @@ SymbolTableEntry* createSymbolTableEntry(char* name, char *fnRef, DataType dataT
     return entry;
 }
 
-RecordTableEntry *initRecordTableEntry(char *recordID){
+RecordTableEntry *initRecordTableEntry(char *recordID, int isUnion){
     RecordTableEntry *newRecord = (RecordTableEntry *)malloc(sizeof(RecordTableEntry));
+    newRecord->isUnion = isUnion;
     newRecord->fieldCount=0;
     newRecord->fields = NULL;
+    newRecord->next = NULL;
     return newRecord;
 }
 
@@ -87,6 +95,13 @@ unsigned int hash(const char* str, int size) {
     }
     return hash % size;
 }
+
+Field *initField(){
+    Field *newField = (Field *)malloc(sizeof(Field));
+    memset(newField, 0, sizeof(Field));
+    return newField;
+}
+createRecordTableEntry(){}
 
 // Function to insert a symbol into the symbol table
 void insertSymbolTableEntry(SymbolTable* table, SymbolTableEntry *entry) {
@@ -114,7 +129,7 @@ SymbolTableEntry* lookupSymbol(SymbolTable* symTable, const char* name) {
 }
 
 // Function to print the symbol table
-void printSymbolTable(Table* symTable) {
+void printSymbolTable(SymbolTable* symTable) {
 
     for (int i = 0; i < symTable->size; i++) {
         SymbolTableEntry* entry = symTable->table[i];
@@ -134,12 +149,12 @@ SymbolTable* symTable;
 
 
 // Function to determine the data type of a node
-DataType getDataType(ParseTreeNode* node) {
+DataType getDataType(AstTreeNode* node) {
     
     if (node->symbol.t == TK_INT) return TYPE_INT;
     if (node->symbol.t == TK_REAL) return TYPE_REAL;
     // Handle constructed datatypes too, needs to complete type def for that
-    return TYPE_CONSTRUCTED;
+    return TYPE_UNDEFINED;
 }
 
 // Function to check if two data types are compatible
@@ -152,15 +167,54 @@ int areTypesCompatible(DataType type1, DataType type2) {
 }
 
 // Function to traverse the parse tree and perform semantic analysis and type checking
-void semanticAnalysis(Table *symbolTable, Table *recordTable, AstTreeNode* node, char* fnRef) {
+void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTreeNode* node, char *fnRef) {
     if (!node) return;
     int scope = 0;
     if (fnRef){
         scope = 1;
     }
-    // Handle different types of nodes (I don't handle function as of now)
+    // Handle different types o bgvfcf nodes (I don't handle function as of now)
     if(!node->isTerminal){
         switch (node->symbol.nt) {
+            case nt_typeDefinitions:
+                for(int i = 0; i < node->childCount; i++){
+                    AstTreeNode *definitionNode = node->children[i];
+                    int isUnion = !(strcmp(definitionNode->children[0]->lexeme, "union"));
+                    char *consName = definitionNode->children[1]->lexeme; 
+                    AstTreeNode *fieldNodes = node->children[2];
+                    Field **fieldList = NULL;
+                    for(int i = 0; i < fieldNodes->childCount; i++){
+                        AstTreeNode *fieldDefNode = fieldNodes->children[i];
+                        Field *field = initField();
+                        strcpy(field->fieldId,fieldDefNode->children[fieldDefNode->childCount - 1]->lexeme);
+                        /*
+                        One way to do this is by adding a column on the symbol table that indicates whether the type 
+                        is defined, for each field definition. Then, after populating the table, go through all the
+                        table rows that have this value set to False, check if the type records for these types are 
+                        available, and then set to True. If any row remains with the value set to False, throw an 
+                        error.
+                         */
+                        if(!strcmp(fieldDefNode->children[0]->lexeme, "int")){
+                            field->fieldType = TYPE_INT;
+                        } else if (!strcmp(fieldDefNode->children[0]->lexeme, "real")){
+                            field->fieldType = TYPE_REAL;
+                        } else if (!strcmp(fieldDefNode->children[0]->lexeme, "record")){
+                            field->fieldType = TYPE_RECORD;
+                            strcpy(field->consName, fieldDefNode->children[fieldDefNode->childCount - 2]->lexeme);
+                        } else if (!strcmp(fieldDefNode->children[0]->lexeme, "union")){
+                            field->fieldType = TYPE_UNION;
+                            strcpy(field->consName, fieldDefNode->children[fieldDefNode->childCount - 2]->lexeme);
+                        }
+                        field->next = *fieldList;
+                        fieldList = &field;
+                    } 
+                    RecordTableEntry *entry = initRecordTableEntry(consName, isUnion);
+                    entry->fieldCount = fieldNodes->childCount;
+                    entry->fields = fieldList;
+                    insertRecordTableEntry(recordTable, entry);
+                }
+
+                return;
             case nt_declarations: {
                 // Go through all the children of nt_declarations 
                 // child order is nt_declaration: type, varname
@@ -169,11 +223,13 @@ void semanticAnalysis(Table *symbolTable, Table *recordTable, AstTreeNode* node,
                     AstTreeNode *varNode = node->children[i];
                     DataType type = getDataType(varNode);
                     char *name = varNode->lexeme;
-                    if(type != TYPE_CONSTRUCTED){
+                    if(type != TYPE_RECORD || type != TYPE_UNION){
                         // primitive datatype, can be added directly
                         SymbolTableEntry *entry = createSymbolTableEntry(name, fnRef, type, scope);
                         // insert the entry into the symbol table
                         insertEntry(symbolTable, entry);
+                    } else {
+                        // lookup record  
                     }
                 }
                 // Check if the variable is already declared in the current scope
