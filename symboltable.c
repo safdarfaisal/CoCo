@@ -24,6 +24,7 @@ typedef struct SymbolTableEntry {
     DataType dataType;
     int scope;
     int size;
+    char consName[30];
     struct SymbolTableEntry* next;
 } SymbolTableEntry;
 
@@ -151,8 +152,10 @@ SymbolTable* symTable;
 // Function to determine the data type of a node
 DataType getDataType(AstTreeNode* node) {
     
-    if (node->symbol.t == TK_INT) return TYPE_INT;
-    if (node->symbol.t == TK_REAL) return TYPE_REAL;
+    if (!strcmp(node->children[0]->lexeme,"int")) return TYPE_INT;
+    if (!strcmp(node->children[0]->lexeme,"real")) return TYPE_REAL;
+    if (!strcmp(node->children[0]->lexeme,"record")) return TYPE_RECORD;
+    if (!strcmp(node->children[0]->lexeme,"union")) return TYPE_UNION;
     // Handle constructed datatypes too, needs to complete type def for that
     return TYPE_UNDEFINED;
 }
@@ -213,7 +216,6 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
                     entry->fields = fieldList;
                     insertRecordTableEntry(recordTable, entry);
                 }
-
                 return;
             case nt_declarations: {
                 // Go through all the children of nt_declarations 
@@ -223,7 +225,7 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
                     AstTreeNode *varNode = node->children[i];
                     DataType type = getDataType(varNode);
                     char *name = varNode->lexeme;
-                    if(type != TYPE_RECORD || type != TYPE_UNION){
+                    if(type == TYPE_RECORD || type == TYPE_UNION){
                         // primitive datatype, can be added directly
                         SymbolTableEntry *entry = createSymbolTableEntry(name, fnRef, type, scope);
                         // insert the entry into the symbol table
@@ -244,32 +246,52 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
                 // break;
                 return ;
             }
-            case nt_assignmentStmt: {
-                // Check if the variable is declared before assignment
-                ParseTreeNode* idNode = node->children[0]->children[0]; // Assuming singleOrRecId -> ID
-                SymbolTableEntry* entry = lookupSymbol(symTable, idNode->lexeme);
-                if (!entry) {
-                    printf("Semantic error: Variable '%s' is not declared.\n", idNode->lexeme);
-                    exit(1);
+            break;
+            case nt_function: {
+                // enter nt_function field. Need to add vars to ip/op pars
+                char *funcName = node->children[0]->lexeme;
+                // get input parameters 
+                AstTreeNode *inputParams = node->children[1];
+                for(int i = 0; i<inputParams->childCount; i++){
+                    AstTreeNode *varNode = inputParams->children[i];
+                    DataType varType = getDataType(varNode);
+                    char *varName = varNode->children[varNode->childCount - 1];
+                    if(varType == TK_RECORD || varType == TK_UNION){
+                        varName = strcat();
+                    }
                 }
-                // Check if the assigned expression is compatible with the variable's type
-                DataType exprType = getDataType(node->children[2]);
-                if (!areTypesCompatible(entry->dataType, exprType)) {
-                    printf("Type error: Incompatible types for variable '%s'.\n", idNode->lexeme);
-                    exit(1);
-                }
-                break;
+                // get output parameters
+                AstTreeNode *outputParams = node->children[2];
+                // read statemtns from this point.
+                semanticAnalysis(symbolTable, recordTable, node->children[3], funcName);
             }
-            case nt_arithmeticExpression: {
-                // Check type consistency in arithmetic expressions
-                DataType leftType = getDataType(node->children[0]);
-                DataType rightType = getDataType(node->children[1]);
-                if (!areTypesCompatible(leftType, rightType)) {
-                    printf("Type error: Incompatible types in arithmetic expression.\n");
-                    exit(1);
-                }
-                break;
-            }
+            break;
+            // case nt_assignmentStmt: {
+            //     // Check if the variable is declared before assignment
+            //     ParseTreeNode* idNode = node->children[0]->children[0]; // Assuming singleOrRecId -> ID
+            //     SymbolTableEntry* entry = lookupSymbol(symTable, idNode->lexeme);
+            //     if (!entry) {
+            //         printf("Semantic error: Variable '%s' is not declared.\n", idNode->lexeme);
+            //         exit(1);
+            //     }
+            //     // Check if the assigned expression is compatible with the variable's type
+            //     DataType exprType = getDataType(node->children[2]);
+            //     if (!areTypesCompatible(entry->dataType, exprType)) {
+            //         printf("Type error: Incompatible types for variable '%s'.\n", idNode->lexeme);
+            //         exit(1);
+            //     }
+            //     break;
+            // }
+            // case nt_arithmeticExpression: {
+            //     // Check type consistency in arithmetic expressions
+            //     DataType leftType = getDataType(node->children[0]);
+            //     DataType rightType = getDataType(node->children[1]);
+            //     if (!areTypesCompatible(leftType, rightType)) {
+            //         printf("Type error: Incompatible types in arithmetic expression.\n");
+            //         exit(1);
+            //     }
+            //     break;
+            // }
             // Add more cases for other semantic checks and type checks as needed
             default:
                 break;
