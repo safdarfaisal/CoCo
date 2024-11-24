@@ -1,4 +1,3 @@
-#include "lexer.h"
 #include <stdio.h>
 #include "astgen.h"
 #include "symboltable.h"

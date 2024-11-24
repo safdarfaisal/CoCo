@@ -40,9 +40,11 @@ SymbolTable* createSymbolTable(int size) {
 }
 
 RecordTable *createRecordTable(int size){
-    RecordTable *recTable = (RecordTable *)malloc(sizeof(RecordTable));
+    RecordTable *recTable = (RecordTable *)malloc(sizeof(recTable));
     recTable->table = (RecordTableEntry **)malloc(size * sizeof(RecordTableEntry *));
-    memset(recTable,0, sizeof(recTable));
+    memset(recTable->table, 0, size*sizeof(RecordTableEntry *));
+    memset(recTable,0, sizeof(RecordTable));
+    return recTable;
 }
 
 // Hash function
@@ -94,7 +96,7 @@ void printSymbolTable(SymbolTable* symTable) {
         if (entry) {
             printf("Index %d:\n", i);
             while (entry) {
-                printf("  Name: %s, Type: %d, DataType: %d, Scope: %d\n", entry->name, entry->fnRef, entry->dataType, entry->scope);
+                printf("  Name: %s, Type: %d, functionRef: %s, Scope: %d\n", entry->name, entry->dataType, entry->fnRef, entry->scope);
                 entry = entry->next;
             }
         }
@@ -208,14 +210,14 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
                 for(int i = 0; i<inputParams->childCount; i++){
                     AstTreeNode *varNode = inputParams->children[i];
                     DataType varType = getDataType(varNode);
-                    char *varName = varNode->children[varNode->childCount - 1];
+                    char *varName = varNode->children[varNode->childCount - 1]->lexeme;
                     varName = strcat(".", varName);
                     varName = strcat(funcName, varName);
                     // var name is now func.var
                     if(varType == TK_RECORD || varType == TK_UNION){
                         // constructed
                         char *consName = "";
-                        strcpy(consName, varNode->children[1]);
+                        strcpy(consName, varNode->children[1]->lexeme);
                         SymbolTableEntry *funcentry = createSymbolTableEntry(varName, funcName, varType, 1);
                         strcpy(funcentry->consName, consName);
                         insertSymbolTableEntry(symbolTable, funcentry);
@@ -230,14 +232,14 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
                 for(int i = 0; i<outputParams->childCount; i++){
                     AstTreeNode *varNode = outputParams->children[i];
                     DataType varType = getDataType(varNode);
-                    char *varName = varNode->children[varNode->childCount - 1];
+                    char *varName = varNode->children[varNode->childCount - 1]->lexeme;
                     varName = strcat(".", varName);
                     varName = strcat(funcName, varName);
                     // var name is now func.var
                     if(varType == TK_RECORD || varType == TK_UNION){
                         // constructed
                         char *consName = "";
-                        strcpy(consName, varNode->children[1]);
+                        strcpy(consName, varNode->children[1]->lexeme);
                         SymbolTableEntry *funcentry = createSymbolTableEntry(varName, funcName, varType, 1);
                         strcpy(funcentry->consName, consName);
                         insertSymbolTableEntry(symbolTable, funcentry);
