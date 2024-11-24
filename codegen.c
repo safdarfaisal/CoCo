@@ -1,49 +1,30 @@
-#ifndef CODEGEN_H
-#define CODEGEN_H
-
-#define LINELENGTH 100
-#define NULL 0
-#include <string.h>
-#include <stdlib.h>
-#include "parser.h"
-#include "cJSON.h"
-
-typedef struct code_line {
-    char value[LINELENGTH];
-    struct code_line* next;
-} code_line;
-
-typedef struct code_block {
-    code_line *top;
-    code_line *bottom;
-} code_block;
-
+#include "codegen.h"
 
 // Forward declaration for parseJSONToTree function
-ParseTreeNode *parseJSONToTree(cJSON *json, ParseTreeNode *parent);
+// ParseTreeNode *parseJSONToTree(cJSON *json, ParseTreeNode *parent);
 
 // Function to map a string to the Symbols enum
-Symbols mapStringToSymbol(const char *str, boolean *isTerminal) {
-    Symbols symbol;
-    if (strcmp(str, "nt_program") == 0) {
-        symbol.nt = nt_program;
-        *isTerminal = FALSE;
-    } else if (strcmp(str, "nt_mainFunction") == 0) {
-        symbol.nt = nt_mainFunction;
-        *isTerminal = FALSE;
-    } else if (strcmp(str, "TK_PLUS") == 0) {
-        symbol.t = TK_PLUS;
-        *isTerminal = TRUE;
-    } else if (strcmp(str, "TK_MINUS") == 0) {
-        symbol.t = TK_MINUS;
-        *isTerminal = TRUE;
-    } else {
-        // Set default for unknown symbols
-        symbol.t = TK_ERROR;
-        *isTerminal = TRUE;
-    }
-    return symbol;
-}
+// Symbols mapStringToSymbol(const char *str, boolean *isTerminal) {
+//     Symbols symbol;
+//     if (strcmp(str, "nt_program") == 0) {
+//         symbol.nt = nt_program;
+//         *isTerminal = FALSE;
+//     } else if (strcmp(str, "nt_mainFunction") == 0) {
+//         symbol.nt = nt_mainFunction;
+//         *isTerminal = FALSE;
+//     } else if (strcmp(str, "TK_PLUS") == 0) {
+//         symbol.t = TK_PLUS;
+//         *isTerminal = TRUE;
+//     } else if (strcmp(str, "TK_MINUS") == 0) {
+//         symbol.t = TK_MINUS;
+//         *isTerminal = TRUE;
+//     } else {
+//         // Set default for unknown symbols
+//         symbol.t = TK_ERROR;
+//         *isTerminal = TRUE;
+//     }
+//     return symbol;
+// }
 
 // Function to read the parse tree from JSON and convert it into ParseTreeNode structure
 // ParseTreeNode *readTreefromJSON(char *filePath) {
@@ -139,7 +120,18 @@ code_block *init_code_block(code_line *top, code_line *bottom) {
     return block;
 }
 
-code_block *arithmetic_expression(ParseTreeNode *node) {
+void createSymbolDeclarations(SymbolTable *table, FILE *nasmfp){
+    // values in the symbol table need to be populated into the .data segment
+    // Only primitives
+    fprintf(nasmfp, "section .data\n");
+    int i = 0;
+    while(table->table[i] && i < table->size){
+        SymbolTableEntry *list = table->table[i];
+        fprintf(nasmfp, "%s dd 0", list->name);
+    }
+}
+
+code_block *arithmetic_expression(AstTreeNode *node) {
     // Implementation for generating code from an arithmetic expression parse tree
     if (!node) return NULL;
 
@@ -178,20 +170,24 @@ void print_code_block(code_block *block) {
         current = current->next;
     }
 }
-void printParseTree(ParseTreeNode* node, int level) {
-    if (node == NULL) return;
-    for (int i = 0; i < level; ++i) printf("  ");
-    printf("%s\n", node->lexeme);
-    for (int i = 0; i < node->childCount; ++i) {
-        printParseTree(node->children[i], level + 1);
-    }
+// void printParseTree(ParseTreeNode* node, int level) {
+//     if (node == NULL) return;
+//     for (int i = 0; i < level; ++i) printf("  ");
+//     printf("%s\n", node->lexeme);
+//     for (int i = 0; i < node->childCount; ++i) {
+//         printParseTree(node->children[i], level + 1);
+//     }
+// }
+
+
+void codegen_run(char *opfilepath, SymbolTable *table, AstTreeNode *program){
+    FILE *nasmfp = fopen(opfilepath, "w+");
+    createSymbolDeclarations(table, nasmfp);
+    fclose(nasmfp);
 }
 
-
-int main(){
-    ParseTreeNode *node = readTreefromJSON("./testfiles/codegen/arithExpr.ast");
-    printParseTree(node, 10);
-    return 0;
-}
-
-#endif
+// int main(){
+//     AstTreeNode *node = astgen_run();
+//     SymbolTable *symTable = createSymbolTable(10);
+//     RecordTable *recTable = createRecordTable(10);
+// }

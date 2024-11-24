@@ -4,51 +4,6 @@
 // records/unions
 
 // Define a simple enum for type information
-typedef enum {
-    TYPE_INT,
-    TYPE_REAL,
-    TYPE_RECORD,
-    TYPE_UNION
-} DataType;
-
-
-
-// Symbol table entry structure
-typedef struct SymbolTableEntry {
-    char name[100];
-    char fnRef[100];
-    DataType dataType;
-    int scope;
-    int size;
-    char consName[30];
-    struct SymbolTableEntry* next;
-} SymbolTableEntry;
-
-typedef struct Field {
-    char fieldId[30];
-    DataType fieldType;
-    char consName[30];
-    struct Field *next;
-} Field;
-
-typedef struct RecordTableEntry {
-    int isUnion;
-    char recordID[100];
-    Field **fields;
-    int fieldCount;
-    struct RecordTableEntry *next;
-} RecordTableEntry;
-
-// Symbol table structure (using chaining for collision resolution)
-typedef struct SymbolTable {
-    SymbolTableEntry** table;
-    int size;
-} SymbolTable;
-
-typedef struct RecordTable {
-    RecordTableEntry** table;
-    int size;
-} RecordTable;
 
 // Function to create a new symbol table entry
 SymbolTableEntry* createSymbolTableEntry(char* name, char *fnRef, DataType dataType, int scope) {
@@ -74,7 +29,7 @@ RecordTableEntry *initRecordTableEntry(char *recordID, int isUnion){
 
 
 // Function to create a symbol table
-SymbolTable* createSymbolTable(int size, int isSymbolTable) {
+SymbolTable* createSymbolTable(int size) {
     SymbolTable* symTable = (SymbolTable*)malloc(sizeof(SymbolTable));
     symTable->table = (SymbolTableEntry**)malloc(size * sizeof(SymbolTableEntry*));
     for (int i = 0; i < size; i++) {
@@ -82,6 +37,12 @@ SymbolTable* createSymbolTable(int size, int isSymbolTable) {
     }
     symTable->size = size;
     return symTable;
+}
+
+RecordTable *createRecordTable(int size){
+    RecordTable *recTable = (RecordTable *)malloc(sizeof(RecordTable));
+    recTable->table = (RecordTableEntry **)malloc(size * sizeof(RecordTableEntry *));
+    memset(recTable,0, sizeof(recTable));
 }
 
 // Hash function
@@ -98,7 +59,7 @@ Field *initField(){
     memset(newField, 0, sizeof(Field));
     return newField;
 }
-createRecordTableEntry(){}
+
 
 // Function to insert a symbol into the symbol table
 void insertSymbolTableEntry(SymbolTable* table, SymbolTableEntry *entry) {
@@ -221,7 +182,7 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
                         // primitive datatype, can be added directly
                         SymbolTableEntry *entry = createSymbolTableEntry(name, fnRef, type, scope);
                         // insert the entry into the symbol table
-                        insertEntry(symbolTable, entry);
+                        insertSymbolTableEntry(symbolTable, entry);
                     } else {
                         // lookup record  TODO:
                     }

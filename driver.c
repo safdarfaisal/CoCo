@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "astgen.h"
 #include "symboltable.h"
+#include "codegen.h"
 
 /*
 
@@ -9,20 +10,11 @@
         1. Provides the tokenized file as <filename>.tkn
         else just exits. Writes errors as TK_ERROR (No error handling yet)
 */
-int main(int argc, char const *argv[]){
-    int choice = -1;
-    printf("1. Generate the tokenized file from the lexer",'\n');
-    scanf(choice);
-    switch (choice)
-    {
-        // write into a file
-    case 1: 
-        
-        break;
-    
-    default:
-        printf("Invalid Choice\n");
-        exit(EXIT_FAILURE);
-    }
-    return EXIT_SUCCESS;
+int main(){
+    AstTreeNode *node = astgen_run();
+    SymbolTable *symTable = createSymbolTable(10);
+    RecordTable *recTable = createRecordTable(10);
+    run(node, symTable, recTable);
+    codegen_run("test.nasm", symTable, node);
+    return 0;
 }

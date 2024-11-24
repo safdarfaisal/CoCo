@@ -12,7 +12,8 @@ typedef enum {
     TYPE_INT,
     TYPE_REAL,
     TYPE_RECORD,
-    TYPE_UNION
+    TYPE_UNION,
+    TYPE_UNDEFINED
 } DataType;
 
 // Symbol table entry structure
@@ -51,5 +52,10 @@ typedef struct RecordTable {
     RecordTableEntry** table;
     int size;
 } RecordTable;
+
+void run(AstTreeNode *node, SymbolTable *symtable, RecordTable *rectable);
+SymbolTable* createSymbolTable(int size);
+void printSymbolTable(SymbolTable* symTable);
+RecordTable *createRecordTable(int size);
 
 #endif

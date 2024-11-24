@@ -43,7 +43,7 @@ AstTreeNode* createNode(Symbols symbol, const char *lexeme, int isTerminal) {
     node->symbol = symbol;
     node->parent=NULL;
     strcpy(node->lexeme, lexeme);
-    node->type = TYPE_UNDEFINED;
+    // node->type = TYPE_UNDEFINED;
     node->children = NULL;
     node->childCount = 0;
     return node;
@@ -1034,7 +1034,7 @@ void printParseTree(AstTreeNode* node, int level) {
 //     return parseTree;
 // }
 
-int main(){
+AstTreeNode *astgen_run(){
     loadTokensFromFile("tokens1.tkn");
     printf("length = %d\n", listSize);
     for(int i = 0; i < listSize; i++){
@@ -1045,7 +1045,7 @@ int main(){
     parseTree = program();
     printParseTree(parseTree, 0);
     printf("Parsing completed succesfully\n");
-    return 0;
+    return parseTree;
 }
 
 
