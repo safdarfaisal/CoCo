@@ -1,12 +1,13 @@
 #include "lexer.h"
 #include <stdio.h>
-
+#include "astgen.h"
+#include "symboltable.h"
 
 /*
 
     The main driver function - use this to run the program.
-        1. Provides the tokenized file as <filename>.lexed
-        else just exits. (No error handling yet)
+        1. Provides the tokenized file as <filename>.tkn
+        else just exits. Writes errors as TK_ERROR (No error handling yet)
 */
 int main(int argc, char const *argv[]){
     int choice = -1;
@@ -14,7 +15,9 @@ int main(int argc, char const *argv[]){
     scanf(choice);
     switch (choice)
     {
+        // write into a file
     case 1: 
+        
         break;
     
     default:

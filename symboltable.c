@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "astgen.c" // Assuming parser.h includes necessary definitions
-#include "helper/definitions.h"
+#include "symboltable.h"
 
 // Create 3 symbol tables, one for functions, one for symbols, one for 
 // records/unions
@@ -137,16 +133,12 @@ void printSymbolTable(SymbolTable* symTable) {
         if (entry) {
             printf("Index %d:\n", i);
             while (entry) {
-                printf("  Name: %s, Type: %d, DataType: %d, Scope: %d\n", entry->name, entry->type, entry->dataType, entry->scope);
+                printf("  Name: %s, Type: %d, DataType: %d, Scope: %d\n", entry->name, entry->fnRef, entry->dataType, entry->scope);
                 entry = entry->next;
             }
         }
     }
 }
-
-// Define scope and the symbol table
-int currentScope = 0;
-SymbolTable* symTable;
 
 
 // Function to determine the data type of a node
@@ -160,14 +152,14 @@ DataType getDataType(AstTreeNode* node) {
     return TYPE_UNDEFINED;
 }
 
-// Function to check if two data types are compatible
-int areTypesCompatible(DataType type1, DataType type2) {
-    // For simplicity, assuming only INT and REAL types
-    if (type1 == type2) return 1;
-    if (type1 == TYPE_INT && type2 == TYPE_REAL) return 1; // Implicit conversion
-    if (type1 == TYPE_REAL && type2 == TYPE_INT) return 1; // Implicit conversion
-    return 0;
-}
+// // Function to check if two data types are compatible
+// int areTypesCompatible(DataType type1, DataType type2) {
+//     // For simplicity, assuming only INT and REAL types
+//     if (type1 == type2) return 1;
+//     if (type1 == TYPE_INT && type2 == TYPE_REAL) return 1; // Implicit conversion
+//     if (type1 == TYPE_REAL && type2 == TYPE_INT) return 1; // Implicit conversion
+//     return 0;
+// }
 
 // Function to traverse the parse tree and perform semantic analysis and type checking
 void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTreeNode* node, char *fnRef) {
@@ -225,13 +217,13 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
                     AstTreeNode *varNode = node->children[i];
                     DataType type = getDataType(varNode);
                     char *name = varNode->lexeme;
-                    if(type == TYPE_RECORD || type == TYPE_UNION){
+                    if(type == TYPE_INT || type == TYPE_REAL){
                         // primitive datatype, can be added directly
                         SymbolTableEntry *entry = createSymbolTableEntry(name, fnRef, type, scope);
                         // insert the entry into the symbol table
                         insertEntry(symbolTable, entry);
                     } else {
-                        // lookup record  
+                        // lookup record  TODO:
                     }
                 }
                 // Check if the variable is already declared in the current scope
@@ -256,12 +248,44 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
                     AstTreeNode *varNode = inputParams->children[i];
                     DataType varType = getDataType(varNode);
                     char *varName = varNode->children[varNode->childCount - 1];
+                    varName = strcat(".", varName);
+                    varName = strcat(funcName, varName);
+                    // var name is now func.var
                     if(varType == TK_RECORD || varType == TK_UNION){
-                        varName = strcat();
+                        // constructed
+                        char *consName = "";
+                        strcpy(consName, varNode->children[1]);
+                        SymbolTableEntry *funcentry = createSymbolTableEntry(varName, funcName, varType, 1);
+                        strcpy(funcentry->consName, consName);
+                        insertSymbolTableEntry(symbolTable, funcentry);
+                    } else {
+                        // primitives
+                        SymbolTableEntry *funcentry = createSymbolTableEntry(varName, funcName, varType, 1);
+                        insertSymbolTableEntry(symbolTable, funcentry);
                     }
                 }
                 // get output parameters
                 AstTreeNode *outputParams = node->children[2];
+                for(int i = 0; i<outputParams->childCount; i++){
+                    AstTreeNode *varNode = outputParams->children[i];
+                    DataType varType = getDataType(varNode);
+                    char *varName = varNode->children[varNode->childCount - 1];
+                    varName = strcat(".", varName);
+                    varName = strcat(funcName, varName);
+                    // var name is now func.var
+                    if(varType == TK_RECORD || varType == TK_UNION){
+                        // constructed
+                        char *consName = "";
+                        strcpy(consName, varNode->children[1]);
+                        SymbolTableEntry *funcentry = createSymbolTableEntry(varName, funcName, varType, 1);
+                        strcpy(funcentry->consName, consName);
+                        insertSymbolTableEntry(symbolTable, funcentry);
+                    } else {
+                        // primitives
+                        SymbolTableEntry *funcentry = createSymbolTableEntry(varName, funcName, varType, 1);
+                        insertSymbolTableEntry(symbolTable, funcentry);
+                    }
+                }
                 // read statemtns from this point.
                 semanticAnalysis(symbolTable, recordTable, node->children[3], funcName);
             }
@@ -299,34 +323,39 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
     }
     // Recursively analyze children
     for (int i = 0; i < node->childCount; i++) {
-        semanticAnalysis(node->children[i], fnRef);
+        semanticAnalysis(symbolTable, recordTable, node->children[i], fnRef);
     }
 }
 
-// Main function
-int main() {
-    // Initialize the symbol table
-    symTable = createSymbolTable(100);
-
-    // Example token stream (should be replaced with actual tokens)
-    Token exampleTokens[] = {
-        {TK_MAIN, "_main"}, {TK_TYPE, "type"}, {TK_INT, "int"}, {TK_COLON, ":"},
-        {TK_ID, "x"}, {TK_SEM, ";"}, {TK_ID, "x"}, {TK_ASSIGNOP, "<---"}, {TK_NUM, "10"}, {TK_SEM, ";"},
-        {TK_RETURN, "return"}, {TK_SEM, ";"}, {TK_END, "end"}, {EPSILON, ""}
-    };
-
-    tokens = exampleTokens;
-    tokenCount = sizeof(exampleTokens) / sizeof(exampleTokens[0]);
-
-    // Parse the tokens and generate the parse tree
-    ParseTreeNode* parseTree = program();
-
-    // Perform semantic analysis and type checking
-    semanticAnalysis(parseTree);
-
-    // Print the symbol table
-    printSymbolTable(symTable);
-
-    printf("Parsing, semantic analysis, and type checking completed successfully.\n");
-    return 0;
+void run(AstTreeNode *node, SymbolTable *symtable, RecordTable *rectable){
+    semanticAnalysis(symtable, rectable, node, NULL);
 }
+
+
+// Main function
+// int main() {
+//     // Initialize the symbol table
+//     symTable = createSymbolTable(100);
+
+//     // Example token stream (should be replaced with actual tokens)
+//     Token exampleTokens[] = {
+//         {TK_MAIN, "_main"}, {TK_TYPE, "type"}, {TK_INT, "int"}, {TK_COLON, ":"},
+//         {TK_ID, "x"}, {TK_SEM, ";"}, {TK_ID, "x"}, {TK_ASSIGNOP, "<---"}, {TK_NUM, "10"}, {TK_SEM, ";"},
+//         {TK_RETURN, "return"}, {TK_SEM, ";"}, {TK_END, "end"}, {EPSILON, ""}
+//     };
+
+//     tokens = exampleTokens;
+//     tokenCount = sizeof(exampleTokens) / sizeof(exampleTokens[0]);
+
+//     // Parse the tokens and generate the parse tree
+//     ParseTreeNode* parseTree = program();
+
+//     // Perform semantic analysis and type checking
+//     semanticAnalysis(parseTree);
+
+//     // Print the symbol table
+//     printSymbolTable(symTable);
+
+//     printf("Parsing, semantic analysis, and type checking completed successfully.\n");
+//     return 0;
+// }
