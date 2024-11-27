@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "astgen.h"
 #include "symboltable.h"
+#include "helper/definitions.h"
 
 #define LINELENGTH 100
 

@@ -42,6 +42,7 @@ AstTreeNode* createNode(Symbols symbol, const char *lexeme, int isTerminal) {
     AstTreeNode* node = (AstTreeNode*)malloc(sizeof(AstTreeNode));
     node->symbol = symbol;
     node->parent=NULL;
+    node->isTerminal=isTerminal;
     strcpy(node->lexeme, lexeme);
     // node->type = TYPE_UNDEFINED;
     node->children = NULL;
@@ -51,13 +52,13 @@ AstTreeNode* createNode(Symbols symbol, const char *lexeme, int isTerminal) {
 
 // Function to add a child to a parse tree node
 void addChild(AstTreeNode *parent, AstTreeNode *child) {
+    if(!child){
+        return;
+    }
     parent->children = (AstTreeNode**)realloc(parent->children, 
         (parent->childCount + 1) * sizeof(AstTreeNode*));
     parent->children[parent->childCount] = child;
     parent->childCount++;
-    if(!child){
-        return;
-    }
     child->parent = parent;  
 }
 
@@ -1081,3 +1082,5 @@ AstTreeNode *astgen_run(){
 #endif
 
 // c3d2 <--- c3 * c3;
+
+// 

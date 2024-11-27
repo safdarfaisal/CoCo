@@ -124,11 +124,13 @@ void createSymbolDeclarations(SymbolTable *table, FILE *nasmfp){
     // values in the symbol table need to be populated into the .data segment
     // Only primitives
     fprintf(nasmfp, "section .data\n");
-    int i = 0;
-    while(table->table[i] && i < table->size){
+    for (int i = 0; i < table->size; i++) {
         SymbolTableEntry *list = table->table[i];
-        fprintf(nasmfp, "%s dd 0", list->name);
-    }
+        while (list) {
+            fprintf(nasmfp, "%s dd 0\n", list->name);
+            list = list->next;
+        }
+    } 
 }
 
 code_block *arithmetic_expression(AstTreeNode *node) {
@@ -179,10 +181,53 @@ void print_code_block(code_block *block) {
 //     }
 // }
 
+void process_ast(SymbolTable *table,  AstTreeNode *node, FILE *opfile){
+    if (node == NULL) return;
+
+    if (!strcmp(node->lexeme, "assignmentStmt")) {
+        // Assignment statement
+        AstTreeNode *variable = node->children[0];
+        AstTreeNode *value = node->children[2];
+
+        // Generate code for value
+        process_ast(table, value, opfile);
+
+        // Assign value to variable
+        fprintf(opfile, "mov [%s], eax\n", variable->lexeme);
+        return;
+    } else if (node->symbol.t == TK_PLUS) {
+        // Addition operation
+        AstTreeNode *leftOperand = node->children[0];
+        AstTreeNode *rightOperand = node->children[1];
+
+        // Generate code for left operand
+        process_ast(table, leftOperand, opfile);
+        fprintf(opfile, "push eax\n");
+
+        // Generate code for right operand
+        process_ast(table, rightOperand, opfile);
+        fprintf(opfile, "pop ebx\n");
+        fprintf(opfile, "add eax, ebx\n");
+        return;
+    } else if (!strcmp(node->lexeme,"var")) {
+        if (node->symbol.t == TK_NUM) {
+            fprintf(opfile, "mov eax, %s\n", node->lexeme);
+        } else {
+            fprintf(opfile, "mov eax, [%s]\n", node->lexeme);
+        }
+        return;
+    }
+    for(int i = 0; i < node->childCount; i++){
+        process_ast(table, node->children[i], opfile);
+    }
+}
+
 
 void codegen_run(char *opfilepath, SymbolTable *table, AstTreeNode *program){
     FILE *nasmfp = fopen(opfilepath, "w+");
     createSymbolDeclarations(table, nasmfp);
+    fprintf(nasmfp, "\nsection .text\n\tglobal _start\n\n_start:\n");
+    process_ast(table, program, nasmfp);
     fclose(nasmfp);
 }
 

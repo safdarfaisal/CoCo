@@ -175,11 +175,11 @@ void semanticAnalysis(SymbolTable *symbolTable, RecordTable *recordTable, AstTre
             case nt_declarations: {
                 // Go through all the children of nt_declarations 
                 // child order is nt_declaration: type, varname
-                for(int i = 0; i < node->childCount; i++){
+                for(int i = 0; i < node->childCount; ++i){
                     // Now at declarations node
                     AstTreeNode *varNode = node->children[i];
                     DataType type = getDataType(varNode);
-                    char *name = varNode->lexeme;
+                    char *name = varNode->children[varNode->childCount - 1]->lexeme;
                     if(type == TYPE_INT || type == TYPE_REAL){
                         // primitive datatype, can be added directly
                         SymbolTableEntry *entry = createSymbolTableEntry(name, fnRef, type, scope);
